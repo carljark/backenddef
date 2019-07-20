@@ -1,4 +1,4 @@
-export default interface IHistory {
+export default interface ITimePrice {
     timestamp: Date;
     price: number;
 }

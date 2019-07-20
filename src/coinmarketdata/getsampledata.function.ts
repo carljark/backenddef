@@ -14,14 +14,16 @@ const getSampleData = (): IResp => {
 
     // convierto la respuesta en una matriz
     // más simple
+    sampleDataObject.status.timestamp = new Date();
 
     const simpleArrayCoins = new Array<ISimpleCoin>();
 
     sampleDataObject.data.forEach((coin) => {
+        const newPrice = Math.round((coin.quote.USD.price * Math.random()) * 100) / 100;
         simpleArrayCoins.push({
             id: coin.id,
             name: coin.slug,
-            price: coin.quote.USD.price,
+            price: newPrice,
         });
     });
 

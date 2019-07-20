@@ -5,13 +5,14 @@
   "license": "MIT",
   "scripts": {
     "start": "cross-env NODE_ENV=development webpack-dev-server",
-    "build": "cross-env NODE_ENV=production webpack"
+    "build": "cross-env NODE_ENV=production webpack && yarn run copytodist",
+    "copytodist": "node copytodist"
   },
   "dependencies": {
     "cross-env": "^5.2.0",
-    "d3": "^5.9.2",
+    "d3": "^5.9.7",
+    "moment": "^2.24.0",
     "rxjs": "^6.4.0",
-    "socket.io-client": "^2.2.0",
     "ts-loader": "^5.3.3",
     "typescript": "^3.3.3333",
     "webpack": "^4.29.6",
@@ -22,6 +23,7 @@
     "@types/node": "^12.0.8",
     "@types/socket.io-client": "^1.4.32",
     "tslint": "^5.17.0",
-    "webpack-cli": "^3.2.3"
+    "webpack-cli": "^3.2.3",
+    "webpack-node-externals": "^1.7.2"
   }
 }

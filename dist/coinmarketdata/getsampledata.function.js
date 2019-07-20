@@ -10,12 +10,14 @@ var sampleDataObject = JSON.parse(sampleDataFile.toString());
 var getSampleData = function () {
     // convierto la respuesta en una matriz
     // más simple
+    sampleDataObject.status.timestamp = new Date();
     var simpleArrayCoins = new Array();
     sampleDataObject.data.forEach(function (coin) {
+        var newPrice = Math.round((coin.quote.USD.price * Math.random()) * 100) / 100;
         simpleArrayCoins.push({
             id: coin.id,
             name: coin.slug,
-            price: coin.quote.USD.price,
+            price: newPrice,
         });
     });
     return {

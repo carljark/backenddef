@@ -105,6 +105,19 @@ var Bd = /** @class */ (function () {
             });
         });
     };
+    Bd.prototype.getLast = function (collectionName) {
+        var _this = this;
+        return new rxjs_1.Observable(function (ob) {
+            _this.connect()
+                .subscribe(function (client) {
+                client.db(_this.dbname).collection(collectionName).find({}).sort({ 'status.timestamp': -1 }).limit(1)
+                    .toArray(function (err, docs) {
+                    ob.next(docs[0]);
+                    client.close();
+                });
+            });
+        });
+    };
     Bd.prototype.getAll = function (collectionName) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {

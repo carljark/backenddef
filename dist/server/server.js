@@ -11,6 +11,9 @@ var index_1 = __importDefault(require("../routes/index"));
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
 var environment_1 = __importDefault(require("../environment"));
+var getandsavedataloop_1 = __importDefault(require("../coinmarketdata/getandsavedataloop"));
+var rxjs_1 = require("rxjs");
+var operators_1 = require("rxjs/operators");
 var dataCoinsResponse = getsampledata_function_1.default();
 var sendMail = function (data) {
     var messageData = {
@@ -39,45 +42,22 @@ var Server = /** @class */ (function () {
             // hay que implementar que los datos sean los últimos
             // así que tendré que definir la variable newResponse
             // fuera del intervalo
-            var newResponse;
+            var lastRespDb;
             sendMail(dataCoinsResponse);
-            var intervalo = setInterval(function () {
-                var newDataCoins = new Array();
-                var newStatus = dataCoinsResponse.status;
-                newStatus.timestamp = new Date();
-                // modifico aleatoriamente los datos de ejemplo
-                // en modo development
-                // pero los sustituyo en produccion
-                // por la datos de coinmarket
-                dataCoinsResponse.data.forEach(function (coin) {
-                    var newPrice = Math.round((coin.price * Math.random()) * 100) / 100;
-                    newDataCoins.push({
-                        id: coin.id,
-                        name: coin.name,
-                        price: newPrice,
-                    });
-                });
-                newResponse = {
-                    data: newDataCoins,
-                    status: newStatus,
-                };
-                // emito solo el array de coins
-                // pero genero el nuevo estatus para guardarlo
-                // en la base de datos y poder
-                // recuperar todas las respuestas buscando por el timestamp
-                // en este punto guardo en la base de datos
-                coins_responses_1.default.insertOne(newResponse)
-                    .subscribe(function (result) {
-                    console.log('result de insertar una response: ', result.result);
-                });
-                socket.emit('coin update', newDataCoins);
-            }, 6000);
+            var intervalRx = rxjs_1.interval(6000);
+            var getAndEmitInterval = intervalRx
+                .pipe(operators_1.switchMap(function (iteration) { return coins_responses_1.default.getLast(); }))
+                .subscribe(function (lastResponseDb) {
+                lastRespDb = lastResponseDb;
+                socket.emit('coin update', lastResponseDb.data);
+                console.log('lastResponseDb.data: ', lastResponseDb.data);
+            });
             var emailInterval = setInterval(function () {
-                sendMail(newResponse);
+                sendMail(lastRespDb);
             }, 3600000);
             socket.on('disconnect', function () {
                 console.log('user disconnected');
-                clearInterval(intervalo);
+                getAndEmitInterval.unsubscribe();
                 clearInterval(emailInterval);
                 socket.disconnect();
             });
@@ -89,6 +69,7 @@ var Server = /** @class */ (function () {
     };
     Server.prototype.start = function (callback) {
         this.httpserver.listen(this.port, callback);
+        getandsavedataloop_1.default();
     };
     return Server;
 }());

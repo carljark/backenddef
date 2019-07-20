@@ -25,7 +25,9 @@ var InterfazCoins = /** @class */ (function () {
             .pipe(operators_1.map(function (res) { return res; }));
     };
     InterfazCoins.prototype.getLast = function () {
-        return this.getHistoryByCount(1);
+        // return this.getHistoryByCount(1);
+        return db_1.default.getLast(this.collectionName)
+            .pipe(operators_1.map(function (respOb) { return respOb; }));
     };
     /**
      * Emite una cadena de respuestas, no una matriz.

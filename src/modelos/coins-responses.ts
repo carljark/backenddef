@@ -41,7 +41,11 @@ class InterfazCoins {
     );
   }
   public getLast(): Observable<IRespDb> {
-    return this.getHistoryByCount(1);
+    // return this.getHistoryByCount(1);
+    return db.getLast(this.collectionName)
+    .pipe(
+      map((respOb) => respOb as IRespDb),
+    );
   }
   /**
    * Emite una cadena de respuestas, no una matriz.
