@@ -1,9 +1,13 @@
 {
   "name": "backenddef",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "author": "Carlos Godoy <carlosag31@hotmail.com>",
   "license": "MIT",
+  "scripts": {
+    "start": "node dist",
+    "build": "tsc"
+  },
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^2.2.0"
