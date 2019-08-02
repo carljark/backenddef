@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="data">Precio actual de criptomonedas:</div>
+    
+</body>
+<script>
+    fetch('/api/coins')
+    .then((result) => {
+        return result.json();
+    })
+    .then((myjson) => {
+        console.log(myjson);
+        const divData = document.getElementById('data');
+
+        for (let i = 0; i < 2; i++) {
+            const eltoData = document.createElement('p');
+            eltoData.textContent = ' name: ' + myjson[i]['name']
+            + '  price: ' + myjson[i]['price'];
+            divData.appendChild(eltoData);
+        }
+    })
+</script>
+</html>
