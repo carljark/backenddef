@@ -4,19 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
-var coinmarketcap_sample_1 = __importDefault(require("./coinmarketcap-sample"));
-/* const sampleData = fs.readFileSync('./samplecurrencylisting.json');
-
-const dataObject = JSON.parse(sampleData.toString());
-
-const jsonData = JSON.stringify(dataObject);
-
-fs.writeFileSync('./prueba.json', jsonData, 'utf8'); */
+var fs_1 = __importDefault(require("fs"));
+var sampleDataFile = fs_1.default.readFileSync('./samplecurrencylisting.json');
+var sampleDataObject = JSON.parse(sampleDataFile.toString());
+var sampleDataJson = JSON.stringify(sampleDataObject);
+// fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 // callSample();
 // getCoinValue();
 var CoinsRoute = /** @class */ (function () {
     function CoinsRoute() {
-        var _this = this;
         //   public pricesArray: IDataCoin[] = [];
         this.pricesArray = [];
         this.router = express_1.Router();
@@ -24,17 +20,21 @@ var CoinsRoute = /** @class */ (function () {
         this.router.use(express_1.urlencoded({ extended: false }));
         this.routes();
         // actualizamos los precios cada 60 segundos
-        coinmarketcap_sample_1.default()
-            .then(function (response) {
+        // sustituimos la llamada por los resultados guardados
+        // para pruebas
+        this.pricesArray = sampleDataObject.data;
+        console.log(this.pricesArray);
+        /* callSample()
+          .then((response: IresponseDataCoin) => {
             console.log('bitcoin: ', response.data[0]);
-            _this.pricesArray = response.data;
-            var jsD = JSON.stringify(response);
+            this.pricesArray = response.data;
+            const jsD = JSON.stringify(response);
             // fs.writeFileSync('./samplecurrencylisting02.json', jsD, 'utf8');
-        })
-            .catch(function (err) {
+          })
+          .catch((err) => {
             console.log('API call error:', err.message);
-        });
-        // this.getPrices();
+          }); */
+        this.updatePrices();
     }
     CoinsRoute.prototype.mainRoute = function (req, res, next) {
         var dataResultArray = this.pricesArray.filter(function (elto) {
@@ -70,7 +70,7 @@ var CoinsRoute = /** @class */ (function () {
     };
     CoinsRoute.prototype.ethereumCoinRoute = function (req, res, next) {
         var bitcoin = this.pricesArray.find(function (elto) {
-            return elto.slug === 'bitcoin';
+            return elto.slug === 'ethereum';
         });
         console.log(bitcoin);
         if (bitcoin) {
@@ -82,7 +82,7 @@ var CoinsRoute = /** @class */ (function () {
             res.json(simplebitcoin.price);
         }
         else {
-            res.send('no se ha encontrado bitcoin');
+            res.send('no se ha encontrado ethereum');
         }
     };
     CoinsRoute.prototype.routes = function () {
@@ -90,20 +90,19 @@ var CoinsRoute = /** @class */ (function () {
         this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
         this.router.use('/coins', this.mainRoute.bind(this));
     };
-    CoinsRoute.prototype.getPrices = function () {
-        var _this = this;
+    CoinsRoute.prototype.updatePrices = function () {
         setInterval(function () {
             console.log('actualizando precios');
-            coinmarketcap_sample_1.default()
-                .then(function (response) {
+            /* callSample()
+              .then((response) => {
                 console.log('bitcoin: ', response.data);
-                _this.pricesArray = response.data;
+                this.pricesArray = response.data;
                 // fs.writeFileSync('./samplecurrencylisting.json', JSON.stringify(response));
-            })
-                .catch(function (err) {
+              })
+              .catch((err) => {
                 console.log('API call error:', err.message);
-            });
-        }, 120000);
+              }); */
+        }, 60000);
     };
     return CoinsRoute;
 }());

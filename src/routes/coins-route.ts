@@ -18,13 +18,13 @@ import getCoinValue from './coins-value.function';
 
 import callSample from './coinmarketcap-sample';
 
-/* const sampleData = fs.readFileSync('./samplecurrencylisting.json');
+const sampleDataFile = fs.readFileSync('./samplecurrencylisting.json');
 
-const dataObject = JSON.parse(sampleData.toString());
+const sampleDataObject: IresponseDataCoin = JSON.parse(sampleDataFile.toString());
 
-const jsonData = JSON.stringify(dataObject);
+const sampleDataJson = JSON.stringify(sampleDataObject);
 
-fs.writeFileSync('./prueba.json', jsonData, 'utf8'); */
+// fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
 // callSample();
 
@@ -42,7 +42,11 @@ class CoinsRoute {
     this.router.use(urlencoded({ extended: false }));
     this.routes();
     // actualizamos los precios cada 60 segundos
-    callSample()
+    // sustituimos la llamada por los resultados guardados
+    // para pruebas
+    this.pricesArray = sampleDataObject.data;
+    console.log(this.pricesArray);
+    /* callSample()
       .then((response: IresponseDataCoin) => {
         console.log('bitcoin: ', response.data[0]);
         this.pricesArray = response.data;
@@ -51,8 +55,8 @@ class CoinsRoute {
       })
       .catch((err) => {
         console.log('API call error:', err.message);
-      });
-    // this.getPrices();
+      }); */
+    this.updatePrices();
   }
   public mainRoute(req: Request, res: Response, next: NextFunction) {
     const dataResultArray = this.pricesArray.filter((elto) => {
@@ -89,7 +93,7 @@ class CoinsRoute {
 
   public ethereumCoinRoute(req: Request, res: Response, next: NextFunction) {
     const bitcoin = this.pricesArray.find((elto) => {
-      return elto.slug === 'bitcoin';
+      return elto.slug === 'ethereum';
     });
     console.log(bitcoin);
     if (bitcoin) {
@@ -100,7 +104,7 @@ class CoinsRoute {
       };
       res.json(simplebitcoin.price);
     } else {
-      res.send('no se ha encontrado bitcoin');
+      res.send('no se ha encontrado ethereum');
     }
   }
 
@@ -110,10 +114,10 @@ class CoinsRoute {
     this.router.use('/coins', this.mainRoute.bind(this));
   }
 
-  public getPrices() {
+  public updatePrices() {
     setInterval(() => {
       console.log('actualizando precios');
-      callSample()
+      /* callSample()
         .then((response) => {
           console.log('bitcoin: ', response.data);
           this.pricesArray = response.data;
@@ -121,8 +125,8 @@ class CoinsRoute {
         })
         .catch((err) => {
           console.log('API call error:', err.message);
-        });
-    }, 120000);
+        }); */
+    }, 60000);
   }
 }
 
