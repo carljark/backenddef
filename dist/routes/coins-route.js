@@ -4,10 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
-var fs_1 = __importDefault(require("fs"));
-var sampleDataFile = fs_1.default.readFileSync('./samplecurrencylisting.json');
-var sampleDataObject = JSON.parse(sampleDataFile.toString());
-var sampleDataJson = JSON.stringify(sampleDataObject);
+var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
+var sampleDataObject = getsampledata_function_1.default();
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 // callSample();
 // getCoinValue();
@@ -22,7 +20,7 @@ var CoinsRoute = /** @class */ (function () {
         // actualizamos los precios cada 60 segundos
         // sustituimos la llamada por los resultados guardados
         // para pruebas
-        this.pricesArray = sampleDataObject.data;
+        this.pricesArray = sampleDataObject;
         console.log(this.pricesArray);
         /* callSample()
           .then((response: IresponseDataCoin) => {
@@ -34,55 +32,38 @@ var CoinsRoute = /** @class */ (function () {
           .catch((err) => {
             console.log('API call error:', err.message);
           }); */
-        this.updatePrices();
+        // actualizo los precios desde server.ts
+        // this.updatePrices();
     }
     CoinsRoute.prototype.mainRoute = function (req, res, next) {
         // al acceder a esta ruta establecemos una conexion permanente
         // con el cliente a traves de websockets con socket.io
         var dataResultArray = this.pricesArray.filter(function (elto) {
-            return elto.slug === 'bitcoin' || elto.slug === 'ethereum';
+            return elto.name === 'bitcoin' || elto.name === 'ethereum';
         });
-        var dataSimpleArray = new Array();
-        dataResultArray.forEach(function (coin) {
-            dataSimpleArray.push({
-                id: coin.id,
-                name: coin.slug,
-                price: coin.quote.USD.price,
-            });
-        });
-        console.log(dataSimpleArray);
-        res.send(dataSimpleArray);
+        console.log(dataResultArray);
+        res.send(dataResultArray);
         next();
     };
     CoinsRoute.prototype.bitCoinRoute = function (req, res, next) {
         var bitcoin = this.pricesArray.find(function (elto) {
-            return elto.slug === 'bitcoin';
+            return elto.name === 'bitcoin';
         });
         console.log(bitcoin);
         if (bitcoin) {
-            var simplebitcoin = {
-                id: bitcoin.id,
-                name: bitcoin.slug,
-                price: bitcoin.quote.USD.price,
-            };
-            res.json(simplebitcoin.price);
+            res.json(bitcoin.price);
         }
         else {
             res.send('no se ha encontrado bitcoin');
         }
     };
     CoinsRoute.prototype.ethereumCoinRoute = function (req, res, next) {
-        var bitcoin = this.pricesArray.find(function (elto) {
-            return elto.slug === 'ethereum';
+        var ethereum = this.pricesArray.find(function (elto) {
+            return elto.name === 'ethereum';
         });
-        console.log(bitcoin);
-        if (bitcoin) {
-            var simplebitcoin = {
-                id: bitcoin.id,
-                name: bitcoin.slug,
-                price: bitcoin.quote.USD.price,
-            };
-            res.json(simplebitcoin.price);
+        console.log(ethereum);
+        if (ethereum) {
+            res.json(ethereum.price);
         }
         else {
             res.send('no se ha encontrado ethereum');

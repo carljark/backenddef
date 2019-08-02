@@ -2,9 +2,6 @@
 
 import rp from 'request-promise';
 
-import fs from 'fs';
-import ISimpleCoin from './simplecoin.interface';
-
 const callSample = (): rp.RequestPromise => {
     const requestOptions = {
         gzip: true,

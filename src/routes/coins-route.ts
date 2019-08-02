@@ -12,19 +12,17 @@ import fs from 'fs';
 
 import socketio from 'socket.io';
 
-import ISimpleCoin from './simplecoin.interface';
+import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
-import IDataCoin, {IresponseDataCoin} from './datacoin.interface';
+import IDataCoin, {IresponseDataCoin} from '../coinmarketdata/datacoin.interface';
 
-import getCoinValue from './coins-value.function';
+import getCoinValue from '../coinmarketdata/coins-value.function';
 
-import callSample from './coinmarketcap-sample';
+import callSample from '../coinmarketdata/getdatacoinmarket';
 
-const sampleDataFile = fs.readFileSync('./samplecurrencylisting.json');
+import getDataSample from '../coinmarketdata/getsampledata.function';
 
-const sampleDataObject: IresponseDataCoin = JSON.parse(sampleDataFile.toString());
-
-const sampleDataJson = JSON.stringify(sampleDataObject);
+const sampleDataObject = getDataSample();
 
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
@@ -36,7 +34,7 @@ class CoinsRoute {
   public router: Router;
 
 //   public pricesArray: IDataCoin[] = [];
-  public pricesArray: IDataCoin[] = [];
+  public pricesArray: ISimpleCoin[] = [];
 
   constructor() {
 
@@ -47,7 +45,7 @@ class CoinsRoute {
     // actualizamos los precios cada 60 segundos
     // sustituimos la llamada por los resultados guardados
     // para pruebas
-    this.pricesArray = sampleDataObject.data;
+    this.pricesArray = sampleDataObject;
     console.log(this.pricesArray);
     /* callSample()
       .then((response: IresponseDataCoin) => {
@@ -59,57 +57,40 @@ class CoinsRoute {
       .catch((err) => {
         console.log('API call error:', err.message);
       }); */
-    this.updatePrices();
+      // actualizo los precios desde server.ts
+    // this.updatePrices();
   }
   public mainRoute(req: Request, res: Response, next: NextFunction) {
     // al acceder a esta ruta establecemos una conexion permanente
     // con el cliente a traves de websockets con socket.io
 
     const dataResultArray = this.pricesArray.filter((elto) => {
-      return elto.slug === 'bitcoin' || elto.slug === 'ethereum';
+      return elto.name === 'bitcoin' || elto.name === 'ethereum';
     });
-    const dataSimpleArray = new Array<ISimpleCoin>();
-    dataResultArray.forEach((coin) => {
-      dataSimpleArray.push({
-        id: coin.id,
-        name: coin.slug,
-        price: coin.quote.USD.price,
-      });
-    });
-    console.log(dataSimpleArray);
-    res.send(dataSimpleArray);
+    console.log(dataResultArray);
+    res.send(dataResultArray);
     next();
   }
 
   public bitCoinRoute(req: Request, res: Response, next: NextFunction) {
     const bitcoin = this.pricesArray.find((elto) => {
-      return elto.slug === 'bitcoin';
+      return elto.name === 'bitcoin';
     });
     console.log(bitcoin);
     if (bitcoin) {
-      const simplebitcoin: ISimpleCoin = {
-        id: bitcoin.id,
-        name: bitcoin.slug,
-        price: bitcoin.quote.USD.price,
-      };
-      res.json(simplebitcoin.price);
+      res.json(bitcoin.price);
     } else {
       res.send('no se ha encontrado bitcoin');
     }
   }
 
   public ethereumCoinRoute(req: Request, res: Response, next: NextFunction) {
-    const bitcoin = this.pricesArray.find((elto) => {
-      return elto.slug === 'ethereum';
+    const ethereum = this.pricesArray.find((elto) => {
+      return elto.name === 'ethereum';
     });
-    console.log(bitcoin);
-    if (bitcoin) {
-      const simplebitcoin: ISimpleCoin = {
-        id: bitcoin.id,
-        name: bitcoin.slug,
-        price: bitcoin.quote.USD.price,
-      };
-      res.json(simplebitcoin.price);
+    console.log(ethereum);
+    if (ethereum) {
+      res.json(ethereum.price);
     } else {
       res.send('no se ha encontrado ethereum');
     }
