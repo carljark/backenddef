@@ -17,6 +17,9 @@ var getSampleData = function () {
             price: coin.quote.USD.price,
         });
     });
-    return simpleArrayCoins;
+    return {
+        data: simpleArrayCoins,
+        status: sampleDataObject.status,
+    };
 };
 exports.default = getSampleData;

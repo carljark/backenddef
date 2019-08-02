@@ -7,7 +7,7 @@ var rxjs_1 = require("rxjs");
 var db_1 = __importDefault(require("../db/db"));
 var InterfazCoins = /** @class */ (function () {
     function InterfazCoins() {
-        this.nombreColeccion = 'usuarios';
+        this.nombreColeccion = 'responses';
         console.log('constructor de InterfazCoins');
     }
     InterfazCoins.init = function () {
@@ -49,11 +49,11 @@ var InterfazCoins = /** @class */ (function () {
             });
         });
     };
-    InterfazCoins.prototype.insertOneCoin = function (coinDoc) {
+    InterfazCoins.prototype.insertOneResponse = function (coinsResponse) {
         var _this = this;
         return new rxjs_1.Observable(function (observer) {
             // sustituir [] por un Array<Object> u otro más apropiado
-            db_1.default.insertOneDoc(_this.nombreColeccion, coinDoc, function (result) {
+            db_1.default.insertOneDoc(_this.nombreColeccion, coinsResponse, function (result) {
                 // console.log('en la clase: ', true);
                 observer.next(result);
             });

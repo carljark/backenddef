@@ -9,7 +9,12 @@ import path from 'path';
 import getSampleData from '../coinmarketdata/getsampledata.function';
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
-const dataCoins = getSampleData();
+import {Istatus} from '../coinmarketdata/datacoin.interface';
+import { IresponseSimpleDataCoin } from '../modelos/responsesimple.interface';
+
+import CoinsInterf from '../modelos/coins';
+
+const dataCoinsResponse = getSampleData();
 
 export default class Server {
     public static init(port: number): Server {
@@ -31,17 +36,33 @@ export default class Server {
             console.log('a user connected');
             setInterval(() => {
                 const newDataCoins = new Array<ISimpleCoin>();
+                const newStatus: Istatus = dataCoinsResponse.status;
+                newStatus.timestamp = new Date();
                 // modifico aleatoriamente los datos de ejemplo
                 // en modo development
                 // pero los sustituyo en produccion
                 // por la datos de coinmarket
-                dataCoins.forEach((coin) => {
+                dataCoinsResponse.data.forEach((coin) => {
                     const newPrice = Math.round((coin.price * Math.random()) * 100) / 100;
                     newDataCoins.push({
                         id: coin.id,
                         name: coin.name,
                         price: newPrice,
                     });
+                });
+                const newResponse: IresponseSimpleDataCoin = {
+                    data: newDataCoins,
+                    status: newStatus,
+                };
+                // emito solo el array de coins
+                // pero genero el nuevo estatus para guardarlo
+                // en la base de datos y poder
+                // recuperar todas las respuestas buscando por el timestamp
+
+                // en este punto guardo en la base de datos
+                CoinsInterf.insertOneResponse(newResponse)
+                .subscribe((result) => {
+                    console.log('result de insertar una response: ', result.result);
                 });
                 socket.emit('coin update', newDataCoins);
             }, 6000);

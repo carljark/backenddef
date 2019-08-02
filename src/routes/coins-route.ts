@@ -22,7 +22,7 @@ import callSample from '../coinmarketdata/getdatacoinmarket';
 
 import getDataSample from '../coinmarketdata/getsampledata.function';
 
-const sampleDataObject = getDataSample();
+const sampleDataResponse = getDataSample();
 
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
@@ -45,7 +45,7 @@ class CoinsRoute {
     // actualizamos los precios cada 60 segundos
     // sustituimos la llamada por los resultados guardados
     // para pruebas
-    this.pricesArray = sampleDataObject;
+    this.pricesArray = sampleDataResponse.data;
     console.log(this.pricesArray);
     /* callSample()
       .then((response: IresponseDataCoin) => {

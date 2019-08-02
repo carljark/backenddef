@@ -1,6 +1,6 @@
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
-export interface IresponseDataCoin {
+export interface IresponseSimpleDataCoin {
     status: {
       timestamp: Date;
       error_code: number;

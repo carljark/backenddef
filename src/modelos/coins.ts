@@ -17,7 +17,7 @@ class InterfazCoins {
   public static init(): InterfazCoins {
     return new InterfazCoins();
   }
-  public nombreColeccion = 'usuarios';
+  public nombreColeccion = 'responses';
   constructor() {
     console.log('constructor de InterfazCoins');
   }
@@ -55,10 +55,10 @@ class InterfazCoins {
       });
     });
   }
-  public insertOneCoin(coinDoc: object): Observable<InsertOneWriteOpResult> {
+  public insertOneResponse(coinsResponse: object): Observable<InsertOneWriteOpResult> {
     return new Observable((observer) => {
       // sustituir [] por un Array<Object> u otro más apropiado
-      db.insertOneDoc(this.nombreColeccion, coinDoc, (result: InsertOneWriteOpResult) => {
+      db.insertOneDoc(this.nombreColeccion, coinsResponse, (result: InsertOneWriteOpResult) => {
         // console.log('en la clase: ', true);
         observer.next(result);
       });

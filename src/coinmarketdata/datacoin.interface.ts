@@ -12,16 +12,18 @@ interface Iquote {
   USD: Iusd;
 }
 
+export interface Istatus {
+  timestamp: Date;
+  error_code: number;
+  error_message: string | null;
+  elapsed: number;
+  credit_count: number;
+}
+
 export interface IresponseDataCoin {
-    status: {
-      timestamp: Date;
-      error_code: number;
-      error_message: string|null;
-      elapsed: number;
-      credit_count: number;
-    };
-    data: IDataCoin[];
-  }
+  status: Istatus;
+  data: IDataCoin[];
+}
 
 export default interface IDataCoin {
   id: number;
@@ -39,5 +41,3 @@ export default interface IDataCoin {
   last_updated: Date;
   quote: Iquote;
 }
-
-

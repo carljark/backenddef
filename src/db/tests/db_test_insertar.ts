@@ -3,7 +3,7 @@ import {argv} from 'process';
 import {CoinDoc} from '../../modelos/coin.class';
 import db from '../db';
 
-import {IresponseDataCoin} from '../../modelos/responsesimple.interface';
+import {IresponseSimpleDataCoin} from '../../modelos/responsesimple.interface';
 
 let coleccion = 'responses';
 let idInput = 0;
@@ -40,7 +40,7 @@ const createCoinDoc = (id: number, name: string, price: number): CoinDoc => {
   } as CoinDoc;
 };
 
-const createCoinsResponseDoc = (): IresponseDataCoin => {
+const createCoinsResponseDoc = (): IresponseSimpleDataCoin => {
   return {
     data: [
       {
