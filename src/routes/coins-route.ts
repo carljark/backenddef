@@ -5,10 +5,12 @@ import {
   Response,
   Router,
   static as estaticExpress,
-  urlencoded
+  urlencoded,
 } from 'express';
 
 import fs from 'fs';
+
+import socketio from 'socket.io';
 
 import ISimpleCoin from './simplecoin.interface';
 
@@ -37,6 +39,7 @@ class CoinsRoute {
   public pricesArray: IDataCoin[] = [];
 
   constructor() {
+
     this.router = Router();
     this.router.use(json());
     this.router.use(urlencoded({ extended: false }));
@@ -59,6 +62,9 @@ class CoinsRoute {
     this.updatePrices();
   }
   public mainRoute(req: Request, res: Response, next: NextFunction) {
+    // al acceder a esta ruta establecemos una conexion permanente
+    // con el cliente a traves de websockets con socket.io
+
     const dataResultArray = this.pricesArray.filter((elto) => {
       return elto.slug === 'bitcoin' || elto.slug === 'ethereum';
     });
@@ -66,12 +72,13 @@ class CoinsRoute {
     dataResultArray.forEach((coin) => {
       dataSimpleArray.push({
         id: coin.id,
-        price: coin.quote.USD.price,
         name: coin.slug,
+        price: coin.quote.USD.price,
       });
     });
     console.log(dataSimpleArray);
     res.send(dataSimpleArray);
+    next();
   }
 
   public bitCoinRoute(req: Request, res: Response, next: NextFunction) {

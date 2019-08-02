@@ -1,3 +1,5 @@
+import {connect as ioconnect, Socket} from 'socket.io-client';
+
 import urlServer from './environment';
 
 const elto = document.getElementById('historial');
@@ -27,4 +29,8 @@ fetch(`${urlServer}/api/coins`)
       eltoDiv.appendChild(eltoDataPrice);
       divData.appendChild(eltoDiv);
     }
+
+    // después de la primera llamada vamos a conectarnos
+    // con el socket del servidor
+    const iosocket = ioconnect(urlServer);
   });

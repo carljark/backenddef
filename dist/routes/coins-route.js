@@ -37,6 +37,8 @@ var CoinsRoute = /** @class */ (function () {
         this.updatePrices();
     }
     CoinsRoute.prototype.mainRoute = function (req, res, next) {
+        // al acceder a esta ruta establecemos una conexion permanente
+        // con el cliente a traves de websockets con socket.io
         var dataResultArray = this.pricesArray.filter(function (elto) {
             return elto.slug === 'bitcoin' || elto.slug === 'ethereum';
         });
@@ -44,12 +46,13 @@ var CoinsRoute = /** @class */ (function () {
         dataResultArray.forEach(function (coin) {
             dataSimpleArray.push({
                 id: coin.id,
-                price: coin.quote.USD.price,
                 name: coin.slug,
+                price: coin.quote.USD.price,
             });
         });
         console.log(dataSimpleArray);
         res.send(dataSimpleArray);
+        next();
     };
     CoinsRoute.prototype.bitCoinRoute = function (req, res, next) {
         var bitcoin = this.pricesArray.find(function (elto) {
