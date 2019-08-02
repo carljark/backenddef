@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: Swagger backend Def
+  version: 1.0.0
+tags:
+- name: backeiddef
+  description: get coin prices
+paths:
+  /coins:
+  /coins/{coinId}:
+    get:
+      tags:
+        - coin
+      summary: Find coin by ID
+      description: Returns a single coin
+      operationId: getCoinById
+      parameters:
+        - name: coinId
+          in: path
+          description: ID of coin to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coin'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Coin'
+components:
+  schemas:
+    Coin:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        price:
+          type: integer
+          format: int64
+      xml:
+        name: Coin
+        
