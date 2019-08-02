@@ -19,29 +19,60 @@
         height: 100%;
         background-color: rgb(231, 180, 139);
       }
-      .caja1 {
+      .tabla {
         border-radius: 30px;
         padding: 30px;
         font-size: 40px;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         background-color: rgb(166, 161, 209);
       }
+      .encabezado {
+        width: 500px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      .tit {
+        width: 40%;
+        text-align: center;
+        background-color: whitesmoke;
+      }
       .data {
         display: flex;
-        justify-content: flex-end;
+        flex-direction: column;
+        justify-content: center;
         align-items: center;
-        padding: 5px;
+        padding: 0px;
         background-color: rgb(208, 240, 215);
+      }
+      .boton {
+        align-self: flex-start;
+        justify-self: flex-start;
+        width: 30%;
+        font-size: 20pt
+      }
+      .fila {
+        width: 490px;
+        padding: 5px;
+        border-style: solid;
+        display: flex;
+        justify-content: space-between;
+        flex-direction: row;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="caja1">
-          <div class="data" id="data">Precio actual de criptomonedas:</div>
-          <button id="historial"></button>
+      <div class="tabla">
+        <div class="encabezado">
+          <div class="tit">Nombre</div>
+          <div class="tit">Precio</div>
+        </div>
+        <div class="data" id="data"></div>
+        <button class="boton" id="historial">Historial</button>
       </div>
     </div>
   </body>

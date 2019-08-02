@@ -17,9 +17,14 @@ fetch(`${urlServer}/api/coins`)
     const divData = document.getElementById('data');
 
     for (let i = 0; i < 2; i++) {
-      const eltoData = document.createElement('p');
-      eltoData.textContent =
-        ' name: ' + myjson[i].name + '  price: ' + myjson[i].price;
-      divData.appendChild(eltoData);
+      const eltoDiv = document.createElement('div');
+      eltoDiv.className = 'fila';
+      const eltoDataName = document.createElement('p');
+      const eltoDataPrice = document.createElement('p');
+      eltoDataName.textContent = myjson[i].name;
+      eltoDataPrice.textContent = myjson[i].price;
+      eltoDiv.appendChild(eltoDataName);
+      eltoDiv.appendChild(eltoDataPrice);
+      divData.appendChild(eltoDiv);
     }
   });
