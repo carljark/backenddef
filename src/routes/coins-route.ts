@@ -24,6 +24,8 @@ import getDataSample from '../coinmarketdata/getsampledata.function';
 
 const sampleDataResponse = getDataSample();
 
+import CoinsInterf from '../modelos/coins';
+
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
 // callSample();
@@ -96,9 +98,18 @@ class CoinsRoute {
     }
   }
 
+  public getHistory(req: Request, res: Response, next: NextFunction) {
+    CoinsInterf.conseguirTodos()
+    .subscribe((result) => {
+      console.log('result de todas las respuestas', result);
+      res.send(result);
+    });
+  }
+
   public routes() {
     this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));
     this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
+    this.router.get('/coins/history', this.getHistory.bind(this));
     this.router.use('/coins', this.mainRoute.bind(this));
   }
 

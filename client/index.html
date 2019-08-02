@@ -62,6 +62,11 @@
         justify-content: space-between;
         flex-direction: row;
       }
+      .historial {
+        background-color: whitesmoke;
+        height: 500px;
+        width: 50%;
+      }
     </style>
   </head>
   <body>
@@ -72,8 +77,9 @@
           <div class="tit">Precio</div>
         </div>
         <div class="data" id="data"></div>
-        <button class="boton" id="historial">Historial</button>
+        <button class="boton" id="histbutton">Historial</button>
       </div>
+      <textarea id="history" class="historial"></textarea>
     </div>
   </body>
   <script src="/bundle.js"></script>

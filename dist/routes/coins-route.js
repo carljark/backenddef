@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var sampleDataResponse = getsampledata_function_1.default();
+var coins_1 = __importDefault(require("../modelos/coins"));
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 // callSample();
 // getCoinValue();
@@ -69,9 +70,17 @@ var CoinsRoute = /** @class */ (function () {
             res.send('no se ha encontrado ethereum');
         }
     };
+    CoinsRoute.prototype.getHistory = function (req, res, next) {
+        coins_1.default.conseguirTodos()
+            .subscribe(function (result) {
+            console.log('result de todas las respuestas', result);
+            res.send(result);
+        });
+    };
     CoinsRoute.prototype.routes = function () {
         this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));
         this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
+        this.router.get('/coins/history', this.getHistory.bind(this));
         this.router.use('/coins', this.mainRoute.bind(this));
     };
     CoinsRoute.prototype.updatePrices = function () {

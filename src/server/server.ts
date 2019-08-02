@@ -34,7 +34,7 @@ export default class Server {
         this.ioserver = socketio(this.httpserver);
         this.ioserver.on('connection', (socket) => {
             console.log('a user connected');
-            setInterval(() => {
+            const intervalo = setInterval(() => {
                 const newDataCoins = new Array<ISimpleCoin>();
                 const newStatus: Istatus = dataCoinsResponse.status;
                 newStatus.timestamp = new Date();
@@ -66,6 +66,11 @@ export default class Server {
                 });
                 socket.emit('coin update', newDataCoins);
             }, 6000);
+            socket.on('disconnect', () => {
+                console.log('user disconnected');
+                clearInterval(intervalo);
+                socket.disconnect();
+            });
         });
         this.app.use('/', indexRoute);
     }

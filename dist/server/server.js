@@ -19,7 +19,7 @@ var Server = /** @class */ (function () {
         this.ioserver = socket_io_1.default(this.httpserver);
         this.ioserver.on('connection', function (socket) {
             console.log('a user connected');
-            setInterval(function () {
+            var intervalo = setInterval(function () {
                 var newDataCoins = new Array();
                 var newStatus = dataCoinsResponse.status;
                 newStatus.timestamp = new Date();
@@ -50,6 +50,11 @@ var Server = /** @class */ (function () {
                 });
                 socket.emit('coin update', newDataCoins);
             }, 6000);
+            socket.on('disconnect', function () {
+                console.log('user disconnected');
+                clearInterval(intervalo);
+                socket.disconnect();
+            });
         });
         this.app.use('/', index_1.default);
     }

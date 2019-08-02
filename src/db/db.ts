@@ -31,30 +31,31 @@ class Bd {
     console.log('constructor de Bd');
   }
 
-  public conectar(): Observable<Db> {
+  public conectar(): Observable<MongoClient> {
     return new Observable((observer) => {
       MongoClient.connect(this.url, { useNewUrlParser: true }, (err, client) => {
         assert.equal(null, err);
         // console.log('Conectado satisfactoriamente al servidor');
-        observer.next(client.db(this.dbname));
-        client.close();
+        observer.next(client);
+        // client.close();
       });
     });
   }
   public borrarTodos(col: string): Observable<DeleteWriteOpResultObject> {
     return new Observable((ob) => {
-      this.conectar().subscribe((d) => {
-        d.collection(col)
+      this.conectar().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(col)
         .deleteMany({}, (err, docs) => {
           ob.next(docs);
         });
       });
     });
   }
+
   public conseguirTodosDocsDeColeccion(col: string): Observable<any> {
     return new Observable((ob) => {
-      this.conectar().subscribe((d) => {
-        d.collection(col)
+      this.conectar().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(col)
         .find({}).toArray((err, docs) => {
           assert.equal(err, null);
           ob.next(docs);
@@ -64,8 +65,8 @@ class Bd {
   }
   public conseguirTodasColecciones(): Observable<any[]> {
     return new Observable((ob) => {
-      this.conectar().subscribe((d) => {
-        d.listCollections({} , {nameOnly: true}).toArray((err, colecciones) => {
+      this.conectar().subscribe((cliente) => {
+        cliente.db(this.dbname).listCollections({} , {nameOnly: true}).toArray((err, colecciones) => {
           assert.equal(err, null);
           ob.next(colecciones);
         });
@@ -77,9 +78,9 @@ class Bd {
     let filtro: FilterQuery<any>;
     filtro = filter;
     return new Observable((ob) => {
-      this.conectar().subscribe((d) => {
+      this.conectar().subscribe((cliente) => {
         // FilterQuery<any>
-        d.collection(collection).findOne(filter, (err: MongoError, result) => {
+        cliente.db(this.dbname).collection(collection).findOne(filter, (err: MongoError, result) => {
           console.log('result getdocbyfilter: ', result);
           ob.next(result);
         });
@@ -88,26 +89,28 @@ class Bd {
   }
   public buscarPorAtributos(coleccion: string, atributos: object): Observable<object[]> {
     return new Observable((ob) => {
-      this.conectar().subscribe((d) => {
-        d.collection(coleccion)
+      this.conectar().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(coleccion)
         .find(atributos).toArray((error, docs) => {
           ob.next(docs);
+          cliente.close();
         });
       });
     });
   }
   public getAllDocuments(callback: (docs: any[]) => void) {
-    this.conectar().subscribe((d) => {
-      d.collection('documents')
+    this.conectar().subscribe((cliente) => {
+      cliente.db(this.dbname).collection('responses')
       .find({}).toArray( (err, docs) => {
         assert.equal(err, null);
         callback(docs);
+        cliente.close();
       });
     });
   }
   public getDocbyAtrib(coleccion: string, atributos: object, callback: (result: any) => void) {
-    this.conectar().subscribe((d) => {
-      d.collection(coleccion).findOne(atributos, (err, result) => {
+    this.conectar().subscribe((cliente) => {
+      cliente.db(this.dbname).collection(coleccion).findOne(atributos, (err, result) => {
         assert.equal(err, null);
         callback(result);
       });
@@ -116,16 +119,17 @@ class Bd {
   public Borrar(coleccion: string, atributos: object): Observable<DeleteWriteOpResultObject> {
     return new Observable<DeleteWriteOpResultObject>((ob) => {
       this.conectar()
-      .subscribe((d) => {
-        d.collection(coleccion).deleteMany(atributos, (err, result: DeleteWriteOpResultObject) => {
+      .subscribe((cliente) => {
+        cliente.db(this.dbname)
+        .collection(coleccion).deleteMany(atributos, (err, result: DeleteWriteOpResultObject) => {
           ob.next(result);
         });
       });
     });
   }
   public getFilterDocuments(coleccion: string, atributos: object, callback: (docs: any[]) => void) {
-    this.conectar().subscribe((d) => {
-      d.collection(coleccion)
+    this.conectar().subscribe((cliente) => {
+      cliente.db(this.dbname).collection(coleccion)
         .find(atributos)
           .toArray((err, docs) => {
             assert.equal(err, null);
@@ -134,8 +138,8 @@ class Bd {
     });
   }
   public insertOneDoc(nombcol: string, doc: object, callback: (result: InsertOneWriteOpResult) => void) {
-    this.conectar().subscribe((d) => {
-      d.collection(nombcol)
+    this.conectar().subscribe((cliente) => {
+      cliente.db(this.dbname).collection(nombcol)
       .insertOne(doc, (err, result) => {
         assert.equal(err, null);
         callback(result);
@@ -144,8 +148,8 @@ class Bd {
   }
   public insertarUnDocumento(coleccion: string, doc: object): Observable<InsertOneWriteOpResult> {
     return new Observable<InsertOneWriteOpResult>((ob) => {
-      this.conectar().subscribe((d) => {
-        d.collection(coleccion)
+      this.conectar().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(coleccion)
         .insertOne(doc, (err, result) => {
           assert.equal(err, null);
           ob.next(result);
@@ -158,8 +162,8 @@ class Bd {
     documentos: object[],
     callback: (result: InsertWriteOpResult) => void,
     ) {
-    this.conectar().subscribe((d) => {
-      d.collection(nombreColeccion)
+    this.conectar().subscribe((cliente) => {
+      cliente.db(this.dbname).collection(nombreColeccion)
       .insertMany(documentos , (err, result) => {
         assert.equal(err, null);
         assert.equal(3, result.result.n);

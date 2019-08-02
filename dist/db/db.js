@@ -26,16 +26,16 @@ var Bd = /** @class */ (function () {
             mongodb_1.MongoClient.connect(_this.url, { useNewUrlParser: true }, function (err, client) {
                 assert.equal(null, err);
                 // console.log('Conectado satisfactoriamente al servidor');
-                observer.next(client.db(_this.dbname));
-                client.close();
+                observer.next(client);
+                // client.close();
             });
         });
     };
     Bd.prototype.borrarTodos = function (col) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
-                d.collection(col)
+            _this.conectar().subscribe(function (cliente) {
+                cliente.db(_this.dbname).collection(col)
                     .deleteMany({}, function (err, docs) {
                     ob.next(docs);
                 });
@@ -45,8 +45,8 @@ var Bd = /** @class */ (function () {
     Bd.prototype.conseguirTodosDocsDeColeccion = function (col) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
-                d.collection(col)
+            _this.conectar().subscribe(function (cliente) {
+                cliente.db(_this.dbname).collection(col)
                     .find({}).toArray(function (err, docs) {
                     assert.equal(err, null);
                     ob.next(docs);
@@ -57,8 +57,8 @@ var Bd = /** @class */ (function () {
     Bd.prototype.conseguirTodasColecciones = function () {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
-                d.listCollections({}, { nameOnly: true }).toArray(function (err, colecciones) {
+            _this.conectar().subscribe(function (cliente) {
+                cliente.db(_this.dbname).listCollections({}, { nameOnly: true }).toArray(function (err, colecciones) {
                     assert.equal(err, null);
                     ob.next(colecciones);
                 });
@@ -71,9 +71,9 @@ var Bd = /** @class */ (function () {
         var filtro;
         filtro = filter;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
+            _this.conectar().subscribe(function (cliente) {
                 // FilterQuery<any>
-                d.collection(collection).findOne(filter, function (err, result) {
+                cliente.db(_this.dbname).collection(collection).findOne(filter, function (err, result) {
                     console.log('result getdocbyfilter: ', result);
                     ob.next(result);
                 });
@@ -83,26 +83,30 @@ var Bd = /** @class */ (function () {
     Bd.prototype.buscarPorAtributos = function (coleccion, atributos) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
-                d.collection(coleccion)
+            _this.conectar().subscribe(function (cliente) {
+                cliente.db(_this.dbname).collection(coleccion)
                     .find(atributos).toArray(function (error, docs) {
                     ob.next(docs);
+                    cliente.close();
                 });
             });
         });
     };
     Bd.prototype.getAllDocuments = function (callback) {
-        this.conectar().subscribe(function (d) {
-            d.collection('documents')
+        var _this = this;
+        this.conectar().subscribe(function (cliente) {
+            cliente.db(_this.dbname).collection('responses')
                 .find({}).toArray(function (err, docs) {
                 assert.equal(err, null);
                 callback(docs);
+                cliente.close();
             });
         });
     };
     Bd.prototype.getDocbyAtrib = function (coleccion, atributos, callback) {
-        this.conectar().subscribe(function (d) {
-            d.collection(coleccion).findOne(atributos, function (err, result) {
+        var _this = this;
+        this.conectar().subscribe(function (cliente) {
+            cliente.db(_this.dbname).collection(coleccion).findOne(atributos, function (err, result) {
                 assert.equal(err, null);
                 callback(result);
             });
@@ -112,16 +116,18 @@ var Bd = /** @class */ (function () {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
             _this.conectar()
-                .subscribe(function (d) {
-                d.collection(coleccion).deleteMany(atributos, function (err, result) {
+                .subscribe(function (cliente) {
+                cliente.db(_this.dbname)
+                    .collection(coleccion).deleteMany(atributos, function (err, result) {
                     ob.next(result);
                 });
             });
         });
     };
     Bd.prototype.getFilterDocuments = function (coleccion, atributos, callback) {
-        this.conectar().subscribe(function (d) {
-            d.collection(coleccion)
+        var _this = this;
+        this.conectar().subscribe(function (cliente) {
+            cliente.db(_this.dbname).collection(coleccion)
                 .find(atributos)
                 .toArray(function (err, docs) {
                 assert.equal(err, null);
@@ -130,8 +136,9 @@ var Bd = /** @class */ (function () {
         });
     };
     Bd.prototype.insertOneDoc = function (nombcol, doc, callback) {
-        this.conectar().subscribe(function (d) {
-            d.collection(nombcol)
+        var _this = this;
+        this.conectar().subscribe(function (cliente) {
+            cliente.db(_this.dbname).collection(nombcol)
                 .insertOne(doc, function (err, result) {
                 assert.equal(err, null);
                 callback(result);
@@ -141,8 +148,8 @@ var Bd = /** @class */ (function () {
     Bd.prototype.insertarUnDocumento = function (coleccion, doc) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.conectar().subscribe(function (d) {
-                d.collection(coleccion)
+            _this.conectar().subscribe(function (cliente) {
+                cliente.db(_this.dbname).collection(coleccion)
                     .insertOne(doc, function (err, result) {
                     assert.equal(err, null);
                     ob.next(result);
@@ -151,8 +158,9 @@ var Bd = /** @class */ (function () {
         });
     };
     Bd.prototype.insertDocuments = function (nombreColeccion, documentos, callback) {
-        this.conectar().subscribe(function (d) {
-            d.collection(nombreColeccion)
+        var _this = this;
+        this.conectar().subscribe(function (cliente) {
+            cliente.db(_this.dbname).collection(nombreColeccion)
                 .insertMany(documentos, function (err, result) {
                 assert.equal(err, null);
                 assert.equal(3, result.result.n);
