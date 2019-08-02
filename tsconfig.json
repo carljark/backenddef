@@ -63,7 +63,9 @@
     "./src/typings.d.ts",
     "./src/server/*",
     "./src/routes/*",
-    "./src/coinmarketdata/*"
+    "./src/coinmarketdata/*",
+    "./src/db/*",
+    "./src/modelos/*"
   ],
   "exclude": [
     "./node_modules"

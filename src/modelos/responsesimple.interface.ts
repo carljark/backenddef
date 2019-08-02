@@ -1,0 +1,12 @@
+import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
+
+export interface IresponseDataCoin {
+    status: {
+      timestamp: Date;
+      error_code: number;
+      error_message: string|null;
+      elapsed: number;
+      credit_count: number;
+    };
+    data: ISimpleCoin[];
+  }
