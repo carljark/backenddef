@@ -1,0 +1,11 @@
+#!/bin/bash
+ts-node './coins_test_insertone.ts'
+ts-node './coins_test_gethistorybycount.ts'
+ts-node './coins_test_gethistoryfromdatetominsandname.ts'
+ts-node './coins_test_getmany.ts'
+ts-node './coins_test_insertone_delbymongoid.ts'
+ts-node './coins_test_getall.ts'
+ts-node './coins_test_getlast.ts'
+ts-node './coins_test_getlast_getbymongoid_getone.ts'
+ts-node './coins_test_insertone_delmany.ts'
+ts-node './coins_test_delall.ts'

@@ -1,12 +1,14 @@
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
-export interface IresponseSimpleDataCoin {
-    status: {
-      timestamp: Date;
-      error_code: number;
-      error_message: string|null;
-      elapsed: number;
-      credit_count: number;
-    };
-    data: ISimpleCoin[];
-  }
+import {Istatus} from '../coinmarketdata/datacoin.interface';
+
+export interface IResp {
+  status: Istatus;
+  data: ISimpleCoin[];
+}
+
+export interface IRespDb {
+  _id: string;
+  status: Istatus;
+  data: ISimpleCoin[];
+}

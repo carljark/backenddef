@@ -8,29 +8,21 @@ import {
   urlencoded,
 } from 'express';
 
-import fs from 'fs';
-
-import socketio from 'socket.io';
-
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
 import IDataCoin, {IresponseDataCoin} from '../coinmarketdata/datacoin.interface';
 
-import getCoinValue from '../coinmarketdata/coins-value.function';
-
-import callSample from '../coinmarketdata/getdatacoinmarket';
+import getDataCoinMarket from '../coinmarketdata/getdatacoinmarket';
 
 import getDataSample from '../coinmarketdata/getsampledata.function';
 
 const sampleDataResponse = getDataSample();
 
-import CoinsInterf from '../modelos/coins';
+import CoinsInterf from '../modelos/coins-responses';
 
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
 // callSample();
-
-// getCoinValue();
 
 class CoinsRoute {
   public router: Router;
@@ -98,11 +90,20 @@ class CoinsRoute {
     }
   }
 
-  public getHistory(req: Request, res: Response, next: NextFunction) {
-    CoinsInterf.conseguirTodos()
+  public getHistory(req: Request, res: Response, next: NextFunction): void {
+    CoinsInterf.getAll()
     .subscribe((result) => {
       console.log('result de todas las respuestas', result);
       res.send(result);
+    });
+  }
+
+  public getHistoryCoin(req: Request, res: Response, next: NextFunction): void {
+    console.log('req.params: ', req.params.name);
+    CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
+    .subscribe((history) => {
+      console.log('icoinhistory: ', history);
+      res.send(history);
     });
   }
 
@@ -110,6 +111,7 @@ class CoinsRoute {
     this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));
     this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
     this.router.get('/coins/history', this.getHistory.bind(this));
+    this.router.get('/coins/history/:name', this.getHistoryCoin.bind(this));
     this.router.use('/coins', this.mainRoute.bind(this));
   }
 

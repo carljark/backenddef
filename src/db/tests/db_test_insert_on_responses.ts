@@ -1,9 +1,8 @@
 // soporta insertar los argumentos desde la línea de comandos
 import {argv} from 'process';
-import {CoinDoc} from '../../modelos/coin.class';
 import db from '../db';
 
-import {IresponseSimpleDataCoin} from '../../modelos/responsesimple.interface';
+import {IResp} from '../../modelos/responsesimple.interface';
 
 let coleccion = 'responses';
 let idInput = 0;
@@ -32,15 +31,7 @@ const crearObjeto = (key: string, value: string) => {
   return objeto;
 };
 
-const createCoinDoc = (id: number, name: string, price: number): CoinDoc => {
-  return {
-    id,
-    name,
-    price,
-  } as CoinDoc;
-};
-
-const createCoinsResponseDoc = (): IresponseSimpleDataCoin => {
+const createCoinsResponseDoc = (): IResp => {
   return {
     data: [
       {
@@ -59,7 +50,7 @@ const createCoinsResponseDoc = (): IresponseSimpleDataCoin => {
       elapsed: 117,
       error_code: 0,
       error_message: null,
-      timestamp: new Date('2019-08-01T12:10:29.168Z'),
+      timestamp: new Date(),
     },
   };
 };
@@ -68,17 +59,9 @@ const createCoinsResponseDoc = (): IresponseSimpleDataCoin => {
 console.log('nombre de la coleccion: ', coleccion);
 console.log('documento preparado: ', documento); */
 
-const coinDoc = createCoinDoc(idInput, nameInput, priceInput);
-
 const coinsResponseDoc = createCoinsResponseDoc();
 
-db.insertarUnDocumento('prueba', coinDoc)
-.subscribe((result) => {
-  // console.log('data.ops devuelto por insertaruno en la instancia: \n', data.ops);
-  console.log('insertarUno --> ok', result.result);
-});
-
-db.insertarUnDocumento(coleccion, coinsResponseDoc)
+db.insertOne(coleccion, coinsResponseDoc)
 .subscribe((result) => {
   console.log('insertado una respuesta con array de coins --> ok', result);
 });

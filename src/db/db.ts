@@ -3,6 +3,7 @@ import {
   Binary,
   Code,
   Collection,
+  Cursor,
   CursorResult,
   Db,
   DeleteWriteOpResultObject,
@@ -17,79 +18,62 @@ import {
   ObjectId,
   Server,
 } from 'mongodb';
-import { Observable } from 'rxjs';
-import Icoin from '../coinmarketdata/simplecoin.interface';
+import { Observable, Subscriber } from 'rxjs';
 
 class Bd {
-  // public mgclientoptions: MongoClientOptions;
   public host = 'localhost';
   public port = 27017;
   public url = 'mongodb://localhost:27017/backenddef';
   public dbname = 'backenddef';
-  // public usercollection: Collection;
-  constructor() {
-    console.log('constructor de Bd');
+
+  public mongoFindLasts = async (cursor: Cursor, ob: Subscriber<object>, limit: number) => {
+    let i = 0;
+    while (await cursor.hasNext() && i < limit) {
+      i++;
+      const doc: object = await cursor.next();
+      ob.next(doc);
+    }
+    ob.complete();
   }
 
-  public conectar(): Observable<MongoClient> {
+  public connect(): Observable<MongoClient> {
     return new Observable((observer) => {
       MongoClient.connect(this.url, { useNewUrlParser: true }, (err, client) => {
         assert.equal(null, err);
-        // console.log('Conectado satisfactoriamente al servidor');
         observer.next(client);
-        // client.close();
       });
     });
   }
-  public borrarTodos(col: string): Observable<DeleteWriteOpResultObject> {
-    return new Observable((ob) => {
-      this.conectar().subscribe((cliente) => {
-        cliente.db(this.dbname).collection(col)
-        .deleteMany({}, (err, docs) => {
-          ob.next(docs);
-        });
+  public getHistory(collectionName: string, limit: number): Observable<object> {
+    return new Observable<any>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        const cursor = client.db(this.dbname)
+        .collection(collectionName)
+        .find({}).sort({_id: -1});
+        this.mongoFindLasts(cursor, ob, limit);
+        // ob.complete();
+        client.close();
       });
     });
   }
-
-  public conseguirTodosDocsDeColeccion(col: string): Observable<any> {
-    return new Observable((ob) => {
-      this.conectar().subscribe((cliente) => {
-        cliente.db(this.dbname).collection(col)
-        .find({}).toArray((err, docs) => {
+  public getAll(collectionName: string): Observable<any[]> {
+    return new Observable<any[]>((ob) => {
+      this.connect()
+      .subscribe((cliente) => {
+        cliente.db(this.dbname).collection(collectionName)
+        .find({}).toArray( (err, docs) => {
           assert.equal(err, null);
           ob.next(docs);
+          cliente.close();
         });
       });
     });
   }
-  public conseguirTodasColecciones(): Observable<any[]> {
+  public getMany(coleccion: string, atributos: object): Observable<object[]> {
     return new Observable((ob) => {
-      this.conectar().subscribe((cliente) => {
-        cliente.db(this.dbname).listCollections({} , {nameOnly: true}).toArray((err, colecciones) => {
-          assert.equal(err, null);
-          ob.next(colecciones);
-        });
-      });
-    });
-  }
-  public getOneDocByFilter(collection: string, filter: object): Observable<Icoin> {
-    console.log('filtro: ', filter);
-    let filtro: FilterQuery<any>;
-    filtro = filter;
-    return new Observable((ob) => {
-      this.conectar().subscribe((cliente) => {
-        // FilterQuery<any>
-        cliente.db(this.dbname).collection(collection).findOne(filter, (err: MongoError, result) => {
-          console.log('result getdocbyfilter: ', result);
-          ob.next(result);
-        });
-      });
-    });
-  }
-  public buscarPorAtributos(coleccion: string, atributos: object): Observable<object[]> {
-    return new Observable((ob) => {
-      this.conectar().subscribe((cliente) => {
+      this.connect()
+      .subscribe((cliente) => {
         cliente.db(this.dbname).collection(coleccion)
         .find(atributos).toArray((error, docs) => {
           ob.next(docs);
@@ -98,79 +82,109 @@ class Bd {
       });
     });
   }
-  public getAllDocuments(callback: (docs: any[]) => void) {
-    this.conectar().subscribe((cliente) => {
-      cliente.db(this.dbname).collection('responses')
-      .find({}).toArray( (err, docs) => {
-        assert.equal(err, null);
-        callback(docs);
-        cliente.close();
-      });
-    });
-  }
-  public getDocbyAtrib(coleccion: string, atributos: object, callback: (result: any) => void) {
-    this.conectar().subscribe((cliente) => {
-      cliente.db(this.dbname).collection(coleccion).findOne(atributos, (err, result) => {
-        assert.equal(err, null);
-        callback(result);
-      });
-    });
-  }
-  public Borrar(coleccion: string, atributos: object): Observable<DeleteWriteOpResultObject> {
-    return new Observable<DeleteWriteOpResultObject>((ob) => {
-      this.conectar()
+  public getOne(coleccion: string, atributos: object): Observable<object> {
+    return new Observable<object>((ob) => {
+      this.connect()
       .subscribe((cliente) => {
-        cliente.db(this.dbname)
-        .collection(coleccion).deleteMany(atributos, (err, result: DeleteWriteOpResultObject) => {
+        cliente.db(this.dbname).collection(coleccion)
+        .findOne(atributos, (err, result) => {
+          assert.equal(err, null);
           ob.next(result);
+          cliente.close();
         });
       });
     });
   }
-  public getFilterDocuments(coleccion: string, atributos: object, callback: (docs: any[]) => void) {
-    this.conectar().subscribe((cliente) => {
-      cliente.db(this.dbname).collection(coleccion)
-        .find(atributos)
-          .toArray((err, docs) => {
-            assert.equal(err, null);
-            callback(docs);
-          });
-    });
-  }
-  public insertOneDoc(nombcol: string, doc: object, callback: (result: InsertOneWriteOpResult) => void) {
-    this.conectar().subscribe((cliente) => {
-      cliente.db(this.dbname).collection(nombcol)
-      .insertOne(doc, (err, result) => {
-        assert.equal(err, null);
-        callback(result);
+  public getByMongoId(collection: string, idMongo: ObjectId): Observable<object> {
+    return new Observable<object>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        client.db(this.dbname)
+        .collection(collection)
+        .findOne({_id: idMongo}, (error: MongoError, result) => {
+          assert.equal(error, null);
+          ob.next(result);
+          client.close();
+        });
       });
     });
   }
-  public insertarUnDocumento(coleccion: string, doc: object): Observable<InsertOneWriteOpResult> {
+  public getAllCollections(): Observable<any[]> {
+    return new Observable((ob) => {
+      this.connect()
+      .subscribe((cliente) => {
+        cliente.db(this.dbname).listCollections({} , {nameOnly: true}).toArray((err, colecciones) => {
+          assert.equal(err, null);
+          ob.next(colecciones);
+          cliente.close();
+        });
+      });
+    });
+  }
+  public insertOne(coleccion: string, doc: object): Observable<InsertOneWriteOpResult> {
     return new Observable<InsertOneWriteOpResult>((ob) => {
-      this.conectar().subscribe((cliente) => {
+      this.connect().subscribe((cliente) => {
         cliente.db(this.dbname).collection(coleccion)
         .insertOne(doc, (err, result) => {
           assert.equal(err, null);
           ob.next(result);
+          cliente.close();
         });
       });
     });
   }
-  public insertDocuments(
-    nombreColeccion: string,
-    documentos: object[],
-    callback: (result: InsertWriteOpResult) => void,
-    ) {
-    this.conectar().subscribe((cliente) => {
-      cliente.db(this.dbname).collection(nombreColeccion)
-      .insertMany(documentos , (err, result) => {
-        assert.equal(err, null);
-        assert.equal(3, result.result.n);
-        assert.equal(3, result.ops.length);
-        callback(result);
+  public insertMany(nombreColeccion: string, documentos: object[]): Observable<InsertWriteOpResult> {
+    return new Observable<InsertWriteOpResult>((ob) => {
+      this.connect().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(nombreColeccion)
+        .insertMany(documentos , (err, result) => {
+          assert.equal(err, null);
+          assert.equal(3, result.result.n);
+          assert.equal(3, result.ops.length);
+          ob.next(result);
+          cliente.close();
+        });
       });
     });
+  }
+  public delMany(coleccion: string, atributos: object): Observable<DeleteWriteOpResultObject> {
+    return new Observable<DeleteWriteOpResultObject>((ob) => {
+      this.connect()
+      .subscribe((cliente) => {
+        cliente.db(this.dbname)
+        .collection(coleccion).deleteMany(atributos, (err, result: DeleteWriteOpResultObject) => {
+          ob.next(result);
+          cliente.close();
+        });
+      });
+    });
+  }
+  public delByMongoId(collection: string, idMongo: ObjectId) {
+    return new Observable<DeleteWriteOpResultObject>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        client.db(this.dbname)
+        .collection(collection)
+        .deleteOne({_id: idMongo}, (error: MongoError, result: DeleteWriteOpResultObject) => {
+          ob.next(result);
+          client.close();
+        });
+      });
+    });
+  }
+  public delAll(col: string): Observable<DeleteWriteOpResultObject> {
+    return new Observable((ob) => {
+      this.connect().subscribe((cliente) => {
+        cliente.db(this.dbname).collection(col)
+        .deleteMany({}, (err, result) => {
+          ob.next(result);
+          cliente.close();
+        });
+      });
+    });
+  }
+  private printtojson(data: any) {
+    console.log(JSON.stringify(data));
   }
 }
 const db = new Bd();

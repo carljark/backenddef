@@ -10,9 +10,9 @@ import getSampleData from '../coinmarketdata/getsampledata.function';
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
 import {Istatus} from '../coinmarketdata/datacoin.interface';
-import { IresponseSimpleDataCoin } from '../modelos/responsesimple.interface';
+import { IResp } from '../modelos/responsesimple.interface';
 
-import CoinsInterf from '../modelos/coins';
+import CoinsInterf from '../modelos/coins-responses';
 
 const dataCoinsResponse = getSampleData();
 
@@ -50,7 +50,7 @@ export default class Server {
                         price: newPrice,
                     });
                 });
-                const newResponse: IresponseSimpleDataCoin = {
+                const newResponse: IResp = {
                     data: newDataCoins,
                     status: newStatus,
                 };
@@ -60,7 +60,7 @@ export default class Server {
                 // recuperar todas las respuestas buscando por el timestamp
 
                 // en este punto guardo en la base de datos
-                CoinsInterf.insertOneResponse(newResponse)
+                CoinsInterf.insertOne(newResponse)
                 .subscribe((result) => {
                     console.log('result de insertar una response: ', result.result);
                 });

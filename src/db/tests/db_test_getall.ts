@@ -15,7 +15,7 @@ console.log('nombre de la coleccion a consultar: ', col);
   console.log('conseguirTodos --> ok', result);
 }); */
 
-db.getAllDocuments((docs) => {
-  console.log('ok');
+db.getAll(col)
+.subscribe((docs) => {
   console.log('docs: ', docs);
 });

@@ -1,15 +1,16 @@
 import fs from 'fs';
+import path from 'path';
 
 import IDataCoin, {IresponseDataCoin} from './datacoin.interface';
 import ISimpleCoin from './simplecoin.interface';
 
-import {IresponseSimpleDataCoin} from '../modelos/responsesimple.interface';
+import {IResp} from '../modelos/responsesimple.interface';
 
-const sampleDataFile = fs.readFileSync('./samplecurrencylisting.json');
+const sampleDataFile = fs.readFileSync(path.join(__dirname, './samplecurrencylisting.json'));
 
 const sampleDataObject: IresponseDataCoin = JSON.parse(sampleDataFile.toString());
 
-const getSampleData = (): IresponseSimpleDataCoin => {
+const getSampleData = (): IResp => {
 
     // convierto la respuesta en una matriz
     // más simple

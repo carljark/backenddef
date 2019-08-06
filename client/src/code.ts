@@ -7,30 +7,26 @@ import IResponseSimple from './responsesimple.interface';
 import urlServer from './environment';
 import IHistory from './history.interface';
 
+import {ICoinHistory} from './coin-history.interface';
+
 const elto = document.getElementById('histbutton');
+const selectElto = document.getElementById('coinname') as HTMLSelectElement;
+const divHistory = document.getElementById('history');
 
 const getHistorial = () => {
-  const divHistory = document.getElementById('history');
+  const coinName = selectElto.value; // selectedindex
+  console.log('select: ', coinName);
   divHistory.textContent = '';
   // al hacer click veremos el historial de
   // precios de los últimos 100 minutos
-  fetch(`${urlServer}/api/coins/history`)
+  fetch(`${urlServer}/api/coins/history/${coinName}`)
   .then((result) => {
     console.log('llamada correcta');
     return result.json();
   })
-  .then((historyResult: IResponseSimple[]) => {
+  .then((coinHistory: ICoinHistory) => {
 
-    const historyArray = new Array<IHistory>();
-
-    historyResult.forEach((resp) => {
-      historyArray.push({
-        price: resp.data[0].price,
-        timestamp: resp.status.timestamp,
-      });
-    });
-
-    historyArray.forEach((his) => {
+    coinHistory.timePriceArray.forEach((his) => {
       divHistory.textContent += `time: ${his.timestamp}  price: ${his.price}\n`;
     });
 

@@ -8,7 +8,7 @@ var http_1 = __importDefault(require("http"));
 var socket_io_1 = __importDefault(require("socket.io"));
 var index_1 = __importDefault(require("../routes/index"));
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
-var coins_1 = __importDefault(require("../modelos/coins"));
+var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
 var dataCoinsResponse = getsampledata_function_1.default();
 var Server = /** @class */ (function () {
     function Server(port) {
@@ -44,7 +44,7 @@ var Server = /** @class */ (function () {
                 // en la base de datos y poder
                 // recuperar todas las respuestas buscando por el timestamp
                 // en este punto guardo en la base de datos
-                coins_1.default.insertOneResponse(newResponse)
+                coins_responses_1.default.insertOne(newResponse)
                     .subscribe(function (result) {
                     console.log('result de insertar una response: ', result.result);
                 });

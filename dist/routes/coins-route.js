@@ -6,10 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var sampleDataResponse = getsampledata_function_1.default();
-var coins_1 = __importDefault(require("../modelos/coins"));
+var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 // callSample();
-// getCoinValue();
 var CoinsRoute = /** @class */ (function () {
     function CoinsRoute() {
         //   public pricesArray: IDataCoin[] = [];
@@ -71,16 +70,25 @@ var CoinsRoute = /** @class */ (function () {
         }
     };
     CoinsRoute.prototype.getHistory = function (req, res, next) {
-        coins_1.default.conseguirTodos()
+        coins_responses_1.default.getAll()
             .subscribe(function (result) {
             console.log('result de todas las respuestas', result);
             res.send(result);
+        });
+    };
+    CoinsRoute.prototype.getHistoryCoin = function (req, res, next) {
+        console.log('req.params: ', req.params.name);
+        coins_responses_1.default.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
+            .subscribe(function (history) {
+            console.log('icoinhistory: ', history);
+            res.send(history);
         });
     };
     CoinsRoute.prototype.routes = function () {
         this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));
         this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
         this.router.get('/coins/history', this.getHistory.bind(this));
+        this.router.get('/coins/history/:name', this.getHistoryCoin.bind(this));
         this.router.use('/coins', this.mainRoute.bind(this));
     };
     CoinsRoute.prototype.updatePrices = function () {
