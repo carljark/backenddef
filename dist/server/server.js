@@ -6,10 +6,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
 var http_1 = __importDefault(require("http"));
 var socket_io_1 = __importDefault(require("socket.io"));
+var mail_1 = __importDefault(require("../email/mail"));
 var index_1 = __importDefault(require("../routes/index"));
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
 var dataCoinsResponse = getsampledata_function_1.default();
+var sendMail = function (data) {
+    var messageData = {
+        message: JSON.stringify(data),
+        subject: 'coin update',
+        // to: 'elcal.lico@gmail.com',
+        to: 'godoy@archrog.localdomain',
+    };
+    var message = Object.assign({}, messageData);
+    mail_1.default.to = message.to;
+    mail_1.default.subject = message.subject;
+    mail_1.default.message = message.message;
+    var result = mail_1.default.sendMail();
+};
 var Server = /** @class */ (function () {
     function Server(port) {
         this.port = port;
@@ -19,6 +33,13 @@ var Server = /** @class */ (function () {
         this.ioserver = socket_io_1.default(this.httpserver);
         this.ioserver.on('connection', function (socket) {
             console.log('a user connected');
+            console.log('sending e-mail');
+            // compruebo que se envia el e-mail
+            // hay que implementar que los datos sean los últimos
+            // así que tendré que definir la variable newResponse
+            // fuera del intervalo
+            var newResponse;
+            sendMail(dataCoinsResponse);
             var intervalo = setInterval(function () {
                 var newDataCoins = new Array();
                 var newStatus = dataCoinsResponse.status;
@@ -35,7 +56,7 @@ var Server = /** @class */ (function () {
                         price: newPrice,
                     });
                 });
-                var newResponse = {
+                newResponse = {
                     data: newDataCoins,
                     status: newStatus,
                 };
@@ -50,9 +71,13 @@ var Server = /** @class */ (function () {
                 });
                 socket.emit('coin update', newDataCoins);
             }, 6000);
+            var emailInterval = setInterval(function () {
+                sendMail(newResponse);
+            }, 3600000);
             socket.on('disconnect', function () {
                 console.log('user disconnected');
                 clearInterval(intervalo);
+                clearInterval(emailInterval);
                 socket.disconnect();
             });
         });

@@ -41,18 +41,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var assert = __importStar(require("assert"));
 var mongodb_1 = require("mongodb");
 var rxjs_1 = require("rxjs");
+var environment_1 = __importDefault(require("../environment"));
 var Bd = /** @class */ (function () {
     function Bd() {
         var _this = this;
-        this.host = 'localhost';
+        this.host = environment_1.default.databaseConfig.host;
         this.port = 27017;
-        // public url = 'mongodb://localhost:27017/backenddef';
-        this.url = 'mongodb://mongo:27017/backenddef';
-        this.dbname = 'backenddef';
+        this.url = "mongodb://" + environment_1.default.databaseConfig.host + ":27017/" + environment_1.default.databaseConfig.database;
+        // implementar environment para que mongo y localhost
+        // se establezcan en development y production
+        // public url = 'mongodb://mongo:27017/backenddef';
+        this.dbname = environment_1.default.databaseConfig.database;
         this.mongoFindLasts = function (cursor, ob, limit) { return __awaiter(_this, void 0, void 0, function () {
             var i, doc;
             return __generator(this, function (_a) {

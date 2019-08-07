@@ -20,12 +20,16 @@ import {
 } from 'mongodb';
 import { Observable, Subscriber } from 'rxjs';
 
+import config from '../environment';
+
 class Bd {
-  public host = 'localhost';
+  public host = config.databaseConfig.host;
   public port = 27017;
-  // public url = 'mongodb://localhost:27017/backenddef';
-  public url = 'mongodb://mongo:27017/backenddef';
-  public dbname = 'backenddef';
+  public url = `mongodb://${config.databaseConfig.host}:27017/${config.databaseConfig.database}`;
+  // implementar environment para que mongo y localhost
+  // se establezcan en development y production
+  // public url = 'mongodb://mongo:27017/backenddef';
+  public dbname = config.databaseConfig.database;
 
   public mongoFindLasts = async (cursor: Cursor, ob: Subscriber<object>, limit: number) => {
     let i = 0;

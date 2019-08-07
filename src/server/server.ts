@@ -3,6 +3,8 @@ import http from 'http';
 
 import socketio from 'socket.io';
 
+import Mail from '../email/mail';
+
 import indexRoute from '../routes/index';
 
 import path from 'path';
@@ -15,6 +17,20 @@ import { IResp } from '../modelos/responsesimple.interface';
 import CoinsInterf from '../modelos/coins-responses';
 
 const dataCoinsResponse = getSampleData();
+
+const sendMail = (data: IResp) => {
+    const messageData = {
+        message: JSON.stringify(data),
+        subject: 'coin update',
+        // to: 'elcal.lico@gmail.com',
+        to: 'godoy@archrog.localdomain',
+    };
+    const message = Object.assign({}, messageData);
+    Mail.to = message.to;
+    Mail.subject = message.subject;
+    Mail.message = message.message;
+    const result = Mail.sendMail();
+};
 
 export default class Server {
     public static init(port: number): Server {
@@ -34,6 +50,13 @@ export default class Server {
         this.ioserver = socketio(this.httpserver);
         this.ioserver.on('connection', (socket) => {
             console.log('a user connected');
+            console.log('sending e-mail');
+            // compruebo que se envia el e-mail
+            // hay que implementar que los datos sean los últimos
+            // así que tendré que definir la variable newResponse
+            // fuera del intervalo
+            let newResponse: IResp;
+            sendMail(dataCoinsResponse);
             const intervalo = setInterval(() => {
                 const newDataCoins = new Array<ISimpleCoin>();
                 const newStatus: Istatus = dataCoinsResponse.status;
@@ -50,7 +73,7 @@ export default class Server {
                         price: newPrice,
                     });
                 });
-                const newResponse: IResp = {
+                newResponse = {
                     data: newDataCoins,
                     status: newStatus,
                 };
@@ -66,9 +89,15 @@ export default class Server {
                 });
                 socket.emit('coin update', newDataCoins);
             }, 6000);
+
+            const emailInterval = setInterval(() => {
+              sendMail(newResponse);
+            }, 3600000);
+
             socket.on('disconnect', () => {
                 console.log('user disconnected');
                 clearInterval(intervalo);
+                clearInterval(emailInterval);
                 socket.disconnect();
             });
         });
