@@ -16,6 +16,8 @@ import { IResp } from '../modelos/responsesimple.interface';
 
 import CoinsInterf from '../modelos/coins-responses';
 
+import config from '../environment';
+
 const dataCoinsResponse = getSampleData();
 
 const sendMail = (data: IResp) => {
@@ -23,7 +25,7 @@ const sendMail = (data: IResp) => {
         message: JSON.stringify(data),
         subject: 'coin update',
         // to: 'elcal.lico@gmail.com',
-        to: 'godoy@archrog.localdomain',
+        to: config.emailto,
     };
     const message = Object.assign({}, messageData);
     Mail.to = message.to;

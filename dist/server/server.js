@@ -10,13 +10,14 @@ var mail_1 = __importDefault(require("../email/mail"));
 var index_1 = __importDefault(require("../routes/index"));
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
+var environment_1 = __importDefault(require("../environment"));
 var dataCoinsResponse = getsampledata_function_1.default();
 var sendMail = function (data) {
     var messageData = {
         message: JSON.stringify(data),
         subject: 'coin update',
         // to: 'elcal.lico@gmail.com',
-        to: 'godoy@archrog.localdomain',
+        to: environment_1.default.emailto,
     };
     var message = Object.assign({}, messageData);
     mail_1.default.to = message.to;

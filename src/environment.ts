@@ -10,6 +10,7 @@ interface IDatabaseConfig {
 interface IConfig {
     databaseConfig: IDatabaseConfig;
     urlServer: string;
+    emailto: string;
 }
 
 interface IConfigModes {
@@ -25,6 +26,7 @@ const configurations: IConfigModes = {
             password: 'password',
             user: 'user',
         },
+        emailto: 'godoy@archrog.localdomain',
         urlServer: 'localhost',
     },
     production: {
@@ -34,6 +36,7 @@ const configurations: IConfigModes = {
             password: 'password',
             user: 'user',
         },
+        emailto: 'dev-test@team.bit2me.com',
         urlServer: 'localhost',
     },
 };

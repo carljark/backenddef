@@ -9,6 +9,7 @@ var configurations = {
             password: 'password',
             user: 'user',
         },
+        emailto: 'godoy@archrog.localdomain',
         urlServer: 'localhost',
     },
     production: {
@@ -18,6 +19,7 @@ var configurations = {
             password: 'password',
             user: 'user',
         },
+        emailto: 'dev-test@team.bit2me.com',
         urlServer: 'localhost',
     },
 };
