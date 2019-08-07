@@ -50,7 +50,8 @@ var Bd = /** @class */ (function () {
         var _this = this;
         this.host = 'localhost';
         this.port = 27017;
-        this.url = 'mongodb://localhost:27017/backenddef';
+        // public url = 'mongodb://localhost:27017/backenddef';
+        this.url = 'mongodb://mongo:27017/backenddef';
         this.dbname = 'backenddef';
         this.mongoFindLasts = function (cursor, ob, limit) { return __awaiter(_this, void 0, void 0, function () {
             var i, doc;

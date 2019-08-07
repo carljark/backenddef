@@ -23,7 +23,8 @@ import { Observable, Subscriber } from 'rxjs';
 class Bd {
   public host = 'localhost';
   public port = 27017;
-  public url = 'mongodb://localhost:27017/backenddef';
+  // public url = 'mongodb://localhost:27017/backenddef';
+  public url = 'mongodb://mongo:27017/backenddef';
   public dbname = 'backenddef';
 
   public mongoFindLasts = async (cursor: Cursor, ob: Subscriber<object>, limit: number) => {
