@@ -65,7 +65,8 @@
     "./src/routes/*",
     "./src/coinmarketdata/*",
     "./src/db/*",
-    "./src/modelos/*"
+    "./src/modelos/*",
+    "./src/email/*"
   ],
   "exclude": [
     "./node_modules"
