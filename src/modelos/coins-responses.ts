@@ -20,6 +20,7 @@ class InterfazCoins {
   public static init(): InterfazCoins {
     return new InterfazCoins();
   }
+  
   public collectionName = 'responses';
   public getAll(): Observable<IRespDb[]> {
     return db.getAll(this.collectionName)

@@ -175,7 +175,7 @@ var Bd = /** @class */ (function () {
                     .insertOne(doc, function (err, result) {
                     assert.equal(err, null);
                     ob.next(result);
-                    cliente.close();
+                    // cliente.close();
                 });
             });
         });
@@ -230,6 +230,33 @@ var Bd = /** @class */ (function () {
                     .deleteMany({}, function (err, result) {
                     ob.next(result);
                     cliente.close();
+                });
+            });
+        });
+    };
+    Bd.prototype.delCollection = function (col) {
+        var _this = this;
+        return new rxjs_1.Observable(function (ob) {
+            _this.connect()
+                .subscribe(function (client) {
+                client.db(_this.dbname).collection(col)
+                    .drop(function () {
+                    ob.next(true);
+                    client.close();
+                });
+            });
+        });
+    };
+    Bd.prototype.createIndex = function (col) {
+        var _this = this;
+        return new rxjs_1.Observable(function (ob) {
+            _this.connect()
+                .subscribe(function (client) {
+                client.db(_this.dbname).collection(col)
+                    .createIndex({ id: 1 }, function (error, result) {
+                    console.log(result);
+                    ob.next(result);
+                    client.close();
                 });
             });
         });

@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +18,7 @@ var express_1 = require("express");
 var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
 var sampleDataResponse = getsampledata_function_1.default();
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
+var bson_1 = require("bson");
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 // callSample();
 var CoinsRoute = /** @class */ (function () {
@@ -41,7 +53,14 @@ var CoinsRoute = /** @class */ (function () {
         var dataResultArray = this.pricesArray.filter(function (elto) {
             return elto.name === 'bitcoin' || elto.name === 'ethereum';
         });
-        console.log(dataResultArray);
+        // console.log(dataResultArray);
+        sampleDataResponse.status.timestamp = new Date();
+        // como al refrescar el navegador se rompe el servidor
+        // voy a obtener el ultimo _id insertado antes de guardar
+        coins_responses_1.default.insertOne(__assign({ _id: new bson_1.ObjectId(new Date().valueOf()) }, sampleDataResponse))
+            .subscribe(function (resultInsertOne) {
+            console.log('result de insertar la primera response: ', resultInsertOne.result);
+        });
         res.send(dataResultArray);
         next();
     };

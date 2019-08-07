@@ -128,7 +128,7 @@ class Bd {
         .insertOne(doc, (err, result) => {
           assert.equal(err, null);
           ob.next(result);
-          cliente.close();
+          // cliente.close();
         });
       });
     });
@@ -180,6 +180,33 @@ class Bd {
           ob.next(result);
           cliente.close();
         });
+      });
+    });
+  }
+  public delCollection(col: string) {
+    return new Observable<any>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        client.db(this.dbname).collection(col)
+        .drop(() => {
+          ob.next(true);
+          client.close();
+        });
+      });
+    });
+  }
+  public createIndex(col: string): Observable<string> {
+    return new Observable<string>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        client.db(this.dbname).collection(col)
+        .createIndex(
+          {id: 1}, (error, result) => {
+            console.log(result);
+            ob.next(result);
+            client.close();
+          },
+        );
       });
     });
   }

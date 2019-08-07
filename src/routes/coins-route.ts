@@ -19,6 +19,8 @@ import getDataSample from '../coinmarketdata/getsampledata.function';
 const sampleDataResponse = getDataSample();
 
 import CoinsInterf from '../modelos/coins-responses';
+import { switchMap } from 'rxjs/operators';
+import { ObjectId } from 'bson';
 
 // fs.writeFileSync('./prueba.json', jsonData, 'utf8');
 
@@ -61,7 +63,15 @@ class CoinsRoute {
     const dataResultArray = this.pricesArray.filter((elto) => {
       return elto.name === 'bitcoin' || elto.name === 'ethereum';
     });
-    console.log(dataResultArray);
+    // console.log(dataResultArray);
+    sampleDataResponse.status.timestamp = new Date();
+
+    // como al refrescar el navegador se rompe el servidor
+    // voy a obtener el ultimo _id insertado antes de guardar
+    CoinsInterf.insertOne({_id: new ObjectId(new Date().valueOf()), ...sampleDataResponse})
+    .subscribe((resultInsertOne) => {
+      console.log('result de insertar la primera response: ', resultInsertOne.result);
+    });
     res.send(dataResultArray);
     next();
   }
