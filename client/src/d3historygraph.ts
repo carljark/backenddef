@@ -14,6 +14,7 @@ interface IScales {
 }
 
 export class GraphLineComponent {
+    public d: ITimePrice;
     public panX: any;
     public panY: any;
     public scaleMultiplier: any;
@@ -21,7 +22,7 @@ export class GraphLineComponent {
     public d3eventtransform: any;
     // public newyScale: d3.AxisScale<number | { valueOf(): number; }>;
     // public newxScale: d3.AxisScale<number | { valueOf(): number; }>;
-    public newyScale: any;
+    public newyScale: any; // asignar en el contructor o equivalente
     public newxScale: any;
     public bisectDate = d3.bisector((d: ITimePrice) => d.timestamp).right;
     public bisectValue = d3.bisector((d: ITimePrice) => d.price).right;
@@ -30,7 +31,8 @@ export class GraphLineComponent {
     public margin = { top: 30, right: 40, bottom: 50, left: 60 };
     public width = this.svgWidth - this.margin.left - this.margin.right;
     public height = this.svgHeight - this.margin.top - this.margin.bottom;
-    public valueline: d3.Line<ITimePrice>;
+    public originalLine: d3.Line<ITimePrice>;
+    public scaledLine: d3.Line<ITimePrice>;
     public originalCircle = {
     cx: -150,
     cy: -15,
@@ -160,7 +162,8 @@ export class GraphLineComponent {
             .append('g')
             .attr('class', 'axis axis--y')
             .call(this.yAxis);
-        this.valueline = d3
+
+        this.originalLine = d3
             .line<ITimePrice>()
             .x((d) => {
             if (d.timestamp instanceof Date) {
@@ -169,6 +172,16 @@ export class GraphLineComponent {
             }
             })
             .y((d) => this.chartProps.yScale(d.price));
+
+        this.scaledLine = d3
+        .line<ITimePrice>()
+        .x((d) => {
+        if (d.timestamp instanceof Date) {
+            // console.log('d.date: ', d.date);
+            return this.newxScale(d.timestamp.getTime());
+        }
+        })
+        .y((d) => this.newyScale(d.price));
     }
     public addEventsArea(): Observable<boolean> {
         return new Observable<boolean>((ob) => {
@@ -203,7 +216,7 @@ export class GraphLineComponent {
             .attr('class', 'linegraph')
             // .style('stroke', color_code) // añadir aquí el color que viene de los datos de la linea
             .style('stroke', 'black')
-            .attr('d', this.valueline.bind(this)(line.timePriceArray));
+            .attr('d', this.originalLine.bind(this)(line.timePriceArray));
     }
     public zoomFunction() {
         this.newxScale = d3.event.transform.rescaleX(this.chartProps.xScale);
@@ -219,18 +232,17 @@ export class GraphLineComponent {
 
         // this.chartProps.xScale.domain(newDomainX);
         // this.chartProps.yScale.domain(d3.event.transform.rescaleY(this.chartProps.yScale.domain()));
-        console.log('se escala');
-        this.lineSvg
-        .attr('d', d3
-        .line<ITimePrice>()
-        .x((d) => {
-        if (d.timestamp instanceof Date) {
-            // console.log('d.date: ', d.date);
-            return this.newxScale(d.timestamp.getTime());
-        }
-        })
-        .y((d) => this.newyScale(d.price)));
+        // console.log('se escala');
 
+        this.changeLine();
+
+        this.moveToolTip();
+
+    }
+
+    public changeLine() {
+        this.lineSvg
+        .attr('d', this.scaledLine.bind(this));
     }
 
     // creamos las funciones que crean los circulos y los tooltips
@@ -310,27 +322,31 @@ export class GraphLineComponent {
         const d1 = this.linea1.timePriceArray[i];
         // console.log('d1: ', d1);
 
-        const d =
+        this.d =
             x0.getTime() - (d0.timestamp as Date).getTime() >
             (d1.timestamp as Date).getTime() - x0.getTime()
             ? d1
             : d0;
-        // console.log('d: ', d);
+        this.moveToolTip();
+
+    }
+
+    public moveToolTip() {
         if (this.newxScale) {
             this.focus
             .attr(
                 'transform',
                 `translate(${this.newxScale(
-                    new Date(d.timestamp),
-                )},${this.newyScale(d.price)})`);
+                    new Date(this.d.timestamp),
+                )},${this.newyScale(this.d.price)})`);
 
         } else {
             this.focus
             .attr(
                 'transform',
                 `translate(${this.chartProps.xScale(
-                    new Date(d.timestamp),
-                )},${this.chartProps.yScale(d.price)})`);
+                    new Date(this.d.timestamp),
+                )},${this.chartProps.yScale(this.d.price)})`);
 
         }
 
@@ -346,8 +362,8 @@ export class GraphLineComponent {
             .select('text')
             .text(
             () =>
-                `${moment(d.timestamp).format('DD/MM HH:mm')}h: ${Math.round(
-                d.price * 10,
+                `${moment(this.d.timestamp).format('DD/MM HH:mm')}h: ${Math.round(
+                this.d.price * 10,
                 ) / 10}`,
             );
 
@@ -369,9 +385,9 @@ export class GraphLineComponent {
         let newy2 = 0;
 
         if (this.newyScale) {
-            newy2 = this.newyScale(d.price);
+            newy2 = this.newyScale(this.d.price);
         } else {
-            newy2 = this.chartProps.yScale(d.price);
+            newy2 = this.chartProps.yScale(this.d.price);
 
         }
 
@@ -385,6 +401,5 @@ export class GraphLineComponent {
         // if (this.d3eventtransform) {
         //     this.view.attr('transform', this.d3eventtransform);
         // }
-
     }
 }
