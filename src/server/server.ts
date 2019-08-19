@@ -18,6 +18,11 @@ import CoinsInterf from '../modelos/coins-responses';
 
 import config from '../environment';
 
+import getAndSaveDataLoop from '../coinmarketdata/getandsavedataloop';
+
+import {interval} from 'rxjs';
+import {switchMap} from 'rxjs/operators';
+
 const dataCoinsResponse = getSampleData();
 
 const sendMail = (data: IResp) => {
@@ -57,48 +62,26 @@ export default class Server {
             // hay que implementar que los datos sean los últimos
             // así que tendré que definir la variable newResponse
             // fuera del intervalo
-            let newResponse: IResp;
+            let lastRespDb: IResp;
             sendMail(dataCoinsResponse);
-            const intervalo = setInterval(() => {
-                const newDataCoins = new Array<ISimpleCoin>();
-                const newStatus: Istatus = dataCoinsResponse.status;
-                newStatus.timestamp = new Date();
-                // modifico aleatoriamente los datos de ejemplo
-                // en modo development
-                // pero los sustituyo en produccion
-                // por la datos de coinmarket
-                dataCoinsResponse.data.forEach((coin) => {
-                    const newPrice = Math.round((coin.price * Math.random()) * 100) / 100;
-                    newDataCoins.push({
-                        id: coin.id,
-                        name: coin.name,
-                        price: newPrice,
-                    });
-                });
-                newResponse = {
-                    data: newDataCoins,
-                    status: newStatus,
-                };
-                // emito solo el array de coins
-                // pero genero el nuevo estatus para guardarlo
-                // en la base de datos y poder
-                // recuperar todas las respuestas buscando por el timestamp
-
-                // en este punto guardo en la base de datos
-                CoinsInterf.insertOne(newResponse)
-                .subscribe((result) => {
-                    console.log('result de insertar una response: ', result.result);
-                });
-                socket.emit('coin update', newDataCoins);
-            }, 6000);
+            const intervalRx = interval(6000);
+            const getAndEmitInterval = intervalRx
+            .pipe(
+              switchMap((iteration) => CoinsInterf.getLast()),
+            )
+            .subscribe(lastResponseDb => {
+              lastRespDb = lastResponseDb;
+              socket.emit('coin update', lastResponseDb.data);
+              console.log('lastResponseDb.data: ', lastResponseDb.data);
+            })
 
             const emailInterval = setInterval(() => {
-              sendMail(newResponse);
+              sendMail(lastRespDb);
             }, 3600000);
 
             socket.on('disconnect', () => {
                 console.log('user disconnected');
-                clearInterval(intervalo);
+                getAndEmitInterval.unsubscribe();
                 clearInterval(emailInterval);
                 socket.disconnect();
             });
@@ -108,5 +91,6 @@ export default class Server {
 
     public start(callback?: () => void) {
         this.httpserver.listen(this.port, callback);
+        getAndSaveDataLoop();
     }
 }

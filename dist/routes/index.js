@@ -16,7 +16,7 @@ var MainRoute = /** @class */ (function () {
         this.routes();
     }
     MainRoute.prototype.routes = function () {
-        this.router.use('/', express_1.static(path_1.default.join(__dirname, '../../public')));
+        this.router.use('/', express_1.static(path_1.default.join(__dirname, '../../client/dist')));
         this.router.use('/api', coins_route_1.default);
     };
     return MainRoute;

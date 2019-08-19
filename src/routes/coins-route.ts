@@ -68,10 +68,10 @@ class CoinsRoute {
 
     // como al refrescar el navegador se rompe el servidor
     // voy a obtener el ultimo _id insertado antes de guardar
-    CoinsInterf.insertOne({_id: new ObjectId(new Date().valueOf()), ...sampleDataResponse})
-    .subscribe((resultInsertOne) => {
-      console.log('result de insertar la primera response: ', resultInsertOne.result);
-    });
+    // CoinsInterf.insertOne({_id: new ObjectId(new Date().valueOf()), ...sampleDataResponse})
+    // .subscribe((resultInsertOne) => {
+    //   console.log('result de insertar la primera response: ', resultInsertOne.result);
+    // });
     res.send(dataResultArray);
     next();
   }

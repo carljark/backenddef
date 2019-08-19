@@ -1,9 +1,6 @@
-export interface ITimePrice {
-    timestamp: Date;
-    price: number;
-}
+import ITimePrice from './timeprice.interface';
 
-export interface ICoinHistory {
+export default interface ICoinHistory {
     name: string;
     timePriceArray: ITimePrice[];
 }

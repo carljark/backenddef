@@ -16,7 +16,7 @@ class MainRoute {
         this.routes();
     }
     public routes() {
-        this.router.use('/', estaticExpress(path.join(__dirname, '../../public')));
+        this.router.use('/', estaticExpress(path.join(__dirname, '../../client/dist')));
         this.router.use('/api', coinsRoute);
     }
 }

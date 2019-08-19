@@ -1,39 +1,36 @@
-import {connect as ioconnect, Socket} from 'socket.io-client';
+import {connect as ioconnect } from 'socket.io-client';
 
 import ISimpleCoin from './simplecoin.interface';
 
-import IResponseSimple from './responsesimple.interface';
-
 import urlServer from './environment';
-import IHistory from './history.interface';
 
-import {ICoinHistory} from './coin-history.interface';
+import ICoinHistory from './coin-history.interface';
+import ITimePrice from './timeprice.interface';
 
 const elto = document.getElementById('histbutton');
 const selectElto = document.getElementById('coinname') as HTMLSelectElement;
-const divHistory = document.getElementById('history');
+// const divHistory = document.getElementById('history');
 
 const getHistorial = () => {
-  const coinName = selectElto.value; // selectedindex
-  console.log('select: ', coinName);
-  divHistory.textContent = '';
-  // al hacer click veremos el historial de
-  // precios de los últimos 100 minutos
-  fetch(`${urlServer}/api/coins/history/${coinName}`)
-  .then((result) => {
-    console.log('llamada correcta');
-    return result.json();
-  })
-  .then((coinHistory: ICoinHistory) => {
-
-    coinHistory.timePriceArray.forEach((his) => {
-      divHistory.textContent += `time: ${his.timestamp}  price: ${his.price}\n`;
+  // lazy load d3historygraph
+  import(/* webpackChunkName: "d3historygraph" */ './d3historygraph').then((module) => {
+    const coinName = selectElto.value; // selectedindex
+    console.log('select: ', coinName);
+    // al hacer click veremos el historial de
+    // precios de los últimos 100 minutos
+    fetch(`${urlServer}/api/coins/history/${coinName}`)
+    .then((result) => {
+      console.log('llamada correcta');
+      return result.json();
+    })
+    .then((coinHistory: ICoinHistory) => {
+      // desactivo la actualización del historial en el textarea
+      /* divHistory.textContent = '';
+      coinHistory.timePriceArray.forEach((his: ITimePrice) => {
+        divHistory.textContent += `time: ${his.timestamp}  price: ${his.price}\n`;
+      }); */
+      const d3Graph = new module.GraphLineComponent([coinHistory]);
     });
-
-    // console.log('historyArray: ', historyArray);
-
-    // console.log('obteniendo el historial', historyResult);
-    // divHistory.textContent = historyArray;
   });
 
 };

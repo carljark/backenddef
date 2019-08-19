@@ -29,6 +29,7 @@ const config = {
                 'base64-js',
                 'component-emitter',
                 'debug',
+                'd3',
                 'ieee754',
                 'indexof',
                 'isarray',
@@ -46,7 +47,6 @@ const config = {
         }),
         {
             'socket.io.slim': 'socket.io-client',
-            'd3': 'd3',
         }
     ],
     output: {
@@ -65,6 +65,7 @@ module.exports = () => {
                     'ansi-html',
                     'base64-js',
                     'component-emitter',
+                    'd3',
                     'debug',
                     'html-entities',
                     'ieee754',
@@ -84,7 +85,6 @@ module.exports = () => {
             }),
             {
                 'socket.io.slim': 'socket.io-client',
-                'd3': 'd3',
             }
         ];
     }

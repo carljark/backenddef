@@ -62,6 +62,18 @@ class Bd {
       });
     });
   }
+  public getLast(collectionName: string): Observable<object> {
+    return new Observable<object>((ob) => {
+      this.connect()
+      .subscribe((client) => {
+        client.db(this.dbname).collection(collectionName).find({}).sort({'status.timestamp': -1}).limit(1)
+        .toArray((err, docs) => {
+          ob.next(docs[0]);
+          client.close();
+        })
+      })
+    })
+  }
   public getAll(collectionName: string): Observable<any[]> {
     return new Observable<any[]>((ob) => {
       this.connect()
