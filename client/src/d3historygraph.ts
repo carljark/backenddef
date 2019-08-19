@@ -124,6 +124,13 @@ export class GraphLineComponent {
         .range([0, this.width])
         .clamp(true);
 
+        // desactivo el zoom del svg para que
+        // no interfiera con el zoom del linesvg
+        this.svgViewport.on('mousedown.zoom', null)
+        .on('touchstart.zoom', null)
+        .on('touchmove.zoom', null)
+        .on('touchend.zoom', null);
+
         this.chartProps.yScale = d3
         .scaleLinear()
         .domain([
@@ -143,6 +150,7 @@ export class GraphLineComponent {
         .translateExtent([[0, 0], [this.width, this.height]])
         .extent([[0, 0], [this.width, this.height]])
         .on('zoom', this.zoomFunction.bind(this));
+
         this.innerSpace = this.svgViewport
         .append('g')
         .attr('class', 'inner_space')
@@ -196,7 +204,13 @@ export class GraphLineComponent {
             .on('mouseout', () => {
                 this.focus.style('display', 'none');
             })
-            .on('mousemove', this.mousemove.bind(this));
+            .on('mousemove', this.mousemove.bind(this))
+            .on('touchstart', this.touchStart.bind(this))
+            .on('touchmove', this.touchStart.bind(this))
+            .on('touchend', () => {
+                this.focus.style('display', null);
+            });
+
             ob.next(true);
         });
     }
@@ -304,6 +318,11 @@ export class GraphLineComponent {
             .attr('x', 15)
             .attr('dy', '.31em');
         // }
+    }
+
+    public touchStart(datum: any, j: any, nodes: any) {
+        this.focus.style('display', null);
+        this.mousemove(datum, j, nodes);
     }
 
     public mousemove(datum: any, j: any, nodes: any) {
