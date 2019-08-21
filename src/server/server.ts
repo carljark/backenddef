@@ -8,10 +8,7 @@ import Mail from '../email/mail';
 import indexRoute from '../routes/index';
 
 import path from 'path';
-import getSampleData from '../coinmarketdata/getsampledata.function';
-import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
-
-import {Istatus} from '../coinmarketdata/datacoin.interface';
+import getData$ from '../coinmarketdata/getdata.function';
 import { IResp } from '../modelos/responsesimple.interface';
 
 import CoinsInterf from '../modelos/coins-responses';
@@ -23,7 +20,7 @@ import getAndSaveDataLoop from '../coinmarketdata/getandsavedataloop';
 import {interval} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
 
-const dataCoinsResponse = getSampleData();
+const dataCoinsResponse$ = getData$();
 
 const sendMail = (data: IResp) => {
     const messageData = {
@@ -55,6 +52,13 @@ export default class Server {
         // inicio el socket
         this.httpserver = http.createServer(this.app);
         this.ioserver = socketio(this.httpserver);
+
+        // sustituto las funciones de dentro de on connection
+        // por emitToAll
+        this.emitToAll();
+        // debo encontrar la manera de emitir a todos
+        // los users a la vez
+        // quizás emitiendo desde fuera del on connection
         this.ioserver.on('connection', (socket) => {
             console.log('a user connected');
             console.log('sending e-mail');
@@ -62,27 +66,27 @@ export default class Server {
             // hay que implementar que los datos sean los últimos
             // así que tendré que definir la variable newResponse
             // fuera del intervalo
-            let lastRespDb: IResp;
+            /* let lastRespDb: IResp;
             sendMail(dataCoinsResponse);
             const intervalRx = interval(6000);
             const getAndEmitInterval = intervalRx
             .pipe(
               switchMap((iteration) => CoinsInterf.getLast()),
             )
-            .subscribe(lastResponseDb => {
+            .subscribe((lastResponseDb) => {
               lastRespDb = lastResponseDb;
               socket.emit('coin update', lastResponseDb.data);
               console.log('lastResponseDb.data: ', lastResponseDb.data);
-            })
+            });
 
             const emailInterval = setInterval(() => {
               sendMail(lastRespDb);
-            }, 3600000);
+            }, 3600000); */
 
             socket.on('disconnect', () => {
                 console.log('user disconnected');
-                getAndEmitInterval.unsubscribe();
-                clearInterval(emailInterval);
+                /* getAndEmitInterval.unsubscribe();
+                clearInterval(emailInterval); */
                 socket.disconnect();
             });
         });
@@ -92,5 +96,27 @@ export default class Server {
     public start(callback?: () => void) {
         this.httpserver.listen(this.port, callback);
         getAndSaveDataLoop();
+    }
+
+    public emitToAll() {
+        let lastRespDb: IResp;
+        dataCoinsResponse$
+        .subscribe((dataCoinsResponse) => {
+            sendMail(dataCoinsResponse);
+        });
+        const intervalRx = interval(6000);
+        const getAndEmitInterval = intervalRx
+        .pipe(
+            switchMap((iteration) => CoinsInterf.getLast()),
+        )
+        .subscribe((lastResponseDb) => {
+            lastRespDb = lastResponseDb;
+            this.ioserver.emit('coin update', lastResponseDb.data);
+            console.log('lastResponseDb.data: ', lastResponseDb.data);
+        });
+
+        const emailInterval = setInterval(() => {
+            sendMail(lastRespDb);
+        }, 3600000);
     }
 }

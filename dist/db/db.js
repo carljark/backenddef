@@ -41,24 +41,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var assert = __importStar(require("assert"));
-var mongodb_1 = require("mongodb");
 var rxjs_1 = require("rxjs");
-var environment_1 = __importDefault(require("../environment"));
 var Bd = /** @class */ (function () {
     function Bd() {
         var _this = this;
-        this.host = environment_1.default.databaseConfig.host;
-        this.port = 27017;
-        this.url = "mongodb://" + environment_1.default.databaseConfig.host + ":27017/" + environment_1.default.databaseConfig.database;
-        // implementar environment para que mongo y localhost
-        // se establezcan en development y production
-        // public url = 'mongodb://mongo:27017/backenddef';
-        this.dbname = environment_1.default.databaseConfig.database;
         this.mongoFindLasts = function (cursor, ob, limit) { return __awaiter(_this, void 0, void 0, function () {
             var i, doc;
             return __generator(this, function (_a) {
@@ -82,209 +70,132 @@ var Bd = /** @class */ (function () {
             });
         }); };
     }
-    Bd.prototype.connect = function () {
-        var _this = this;
-        return new rxjs_1.Observable(function (observer) {
-            mongodb_1.MongoClient.connect(_this.url, { useNewUrlParser: true }, function (err, client) {
-                assert.equal(null, err);
-                observer.next(client);
-            });
-        });
-    };
-    Bd.prototype.getHistory = function (collectionName, limit) {
+    Bd.prototype.getHistory = function (d, collectionName, limit) {
         var _this = this;
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                var cursor = client.db(_this.dbname)
-                    .collection(collectionName)
-                    .find({}).sort({ _id: -1 });
-                _this.mongoFindLasts(cursor, ob, limit);
-                // ob.complete();
-                client.close();
-            });
+            var cursor = d.collection(collectionName)
+                .find({}).sort({ _id: -1 });
+            _this.mongoFindLasts(cursor, ob, limit);
         });
     };
-    Bd.prototype.getLast = function (collectionName) {
-        var _this = this;
+    Bd.prototype.getLastFromPromised = function (d, collectionName) {
+        return rxjs_1.from(d.collection(collectionName).find({}).sort({ 'status.timestamp': -1 }).limit(1)
+            .toArray());
+    };
+    Bd.prototype.getLast = function (d, collectionName) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                client.db(_this.dbname).collection(collectionName).find({}).sort({ 'status.timestamp': -1 }).limit(1)
-                    .toArray(function (err, docs) {
-                    ob.next(docs[0]);
-                    client.close();
-                });
+            d.collection(collectionName).find({}).sort({ 'status.timestamp': -1 }).limit(1)
+                .toArray(function (err, docs) {
+                ob.next(docs[0]);
             });
         });
     };
-    Bd.prototype.getAll = function (collectionName) {
-        var _this = this;
+    Bd.prototype.getAll = function (d, collectionName) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(collectionName)
-                    .find({}).toArray(function (err, docs) {
-                    assert.equal(err, null);
-                    ob.next(docs);
-                    cliente.close();
-                });
+            d.collection(collectionName)
+                .find({}).toArray(function (err, docs) {
+                assert.equal(err, null);
+                ob.next(docs);
             });
         });
     };
-    Bd.prototype.getMany = function (coleccion, atributos) {
-        var _this = this;
+    Bd.prototype.getMany = function (d, coleccion, atributos) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(coleccion)
-                    .find(atributos).toArray(function (error, docs) {
-                    ob.next(docs);
-                    cliente.close();
-                });
+            d.collection(coleccion)
+                .find(atributos).toArray(function (error, docs) {
+                ob.next(docs);
             });
         });
     };
-    Bd.prototype.getOne = function (coleccion, atributos) {
-        var _this = this;
+    Bd.prototype.getOne = function (d, coleccion, atributos) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(coleccion)
-                    .findOne(atributos, function (err, result) {
-                    assert.equal(err, null);
-                    ob.next(result);
-                    cliente.close();
-                });
+            d.collection(coleccion)
+                .findOne(atributos, function (err, result) {
+                assert.equal(err, null);
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.getByMongoId = function (collection, idMongo) {
-        var _this = this;
+    Bd.prototype.getByMongoId = function (d, collection, idMongo) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                client.db(_this.dbname)
-                    .collection(collection)
-                    .findOne({ _id: idMongo }, function (error, result) {
-                    assert.equal(error, null);
-                    ob.next(result);
-                    client.close();
-                });
+            d.collection(collection)
+                .findOne({ _id: idMongo }, function (error, result) {
+                assert.equal(error, null);
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.getAllCollections = function () {
-        var _this = this;
+    Bd.prototype.getAllCollections = function (d) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (cliente) {
-                cliente.db(_this.dbname).listCollections({}, { nameOnly: true }).toArray(function (err, colecciones) {
-                    assert.equal(err, null);
-                    ob.next(colecciones);
-                    cliente.close();
-                });
+            d.listCollections({}, { nameOnly: true }).toArray(function (err, colecciones) {
+                assert.equal(err, null);
+                ob.next(colecciones);
             });
         });
     };
-    Bd.prototype.insertOne = function (coleccion, doc) {
-        var _this = this;
+    Bd.prototype.insertOne = function (d, coleccion, doc) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect().subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(coleccion)
-                    .insertOne(doc, function (err, result) {
-                    assert.equal(err, null);
-                    ob.next(result);
-                    // cliente.close();
-                });
+            d.collection(coleccion)
+                .insertOne(doc, function (err, result) {
+                assert.equal(err, null);
+                ob.next(result);
+                // cliente.close();
             });
         });
     };
-    Bd.prototype.insertMany = function (nombreColeccion, documentos) {
-        var _this = this;
+    Bd.prototype.insertMany = function (d, nombreColeccion, documentos) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect().subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(nombreColeccion)
-                    .insertMany(documentos, function (err, result) {
-                    assert.equal(err, null);
-                    assert.equal(3, result.result.n);
-                    assert.equal(3, result.ops.length);
-                    ob.next(result);
-                    cliente.close();
-                });
+            d.collection(nombreColeccion)
+                .insertMany(documentos, function (err, result) {
+                assert.equal(err, null);
+                assert.equal(3, result.result.n);
+                assert.equal(3, result.ops.length);
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.delMany = function (coleccion, atributos) {
-        var _this = this;
+    Bd.prototype.delMany = function (d, coleccion, atributos) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (cliente) {
-                cliente.db(_this.dbname)
-                    .collection(coleccion).deleteMany(atributos, function (err, result) {
-                    ob.next(result);
-                    cliente.close();
-                });
+            d.collection(coleccion).deleteMany(atributos, function (err, result) {
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.delByMongoId = function (collection, idMongo) {
-        var _this = this;
+    Bd.prototype.delByMongoId = function (d, collection, idMongo) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                client.db(_this.dbname)
-                    .collection(collection)
-                    .deleteOne({ _id: idMongo }, function (error, result) {
-                    ob.next(result);
-                    client.close();
-                });
+            d.collection(collection)
+                .deleteOne({ _id: idMongo }, function (error, result) {
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.delAll = function (col) {
-        var _this = this;
+    Bd.prototype.delAll = function (d, col) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect().subscribe(function (cliente) {
-                cliente.db(_this.dbname).collection(col)
-                    .deleteMany({}, function (err, result) {
-                    ob.next(result);
-                    cliente.close();
-                });
+            d.collection(col)
+                .deleteMany({}, function (err, result) {
+                ob.next(result);
             });
         });
     };
-    Bd.prototype.delCollection = function (col) {
-        var _this = this;
+    Bd.prototype.delCollection = function (d, col) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                client.db(_this.dbname).collection(col)
-                    .drop(function () {
-                    ob.next(true);
-                    client.close();
-                });
+            d.collection(col)
+                .drop(function () {
+                ob.next(true);
             });
         });
     };
-    Bd.prototype.createIndex = function (col) {
-        var _this = this;
+    Bd.prototype.createIndex = function (d, col) {
         return new rxjs_1.Observable(function (ob) {
-            _this.connect()
-                .subscribe(function (client) {
-                client.db(_this.dbname).collection(col)
-                    .createIndex({ id: 1 }, function (error, result) {
-                    console.log(result);
-                    ob.next(result);
-                    client.close();
-                });
+            d.collection(col)
+                .createIndex({ id: 1 }, function (error, result) {
+                console.log(result);
+                ob.next(result);
             });
         });
-    };
-    Bd.prototype.printtojson = function (data) {
-        console.log(JSON.stringify(data));
     };
     return Bd;
 }());
+exports.Bd = Bd;
 var db = new Bd();
 exports.default = db;

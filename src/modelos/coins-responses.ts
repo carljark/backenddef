@@ -1,17 +1,12 @@
 import {
-  BulkWriteOpResultObject,
-  CommandCursorResult,
   DeleteWriteOpResultObject,
-  FindAndModifyWriteOpResultObject,
   InsertOneWriteOpResult,
-  InsertWriteOpResult,
   ObjectId,
-  OrderedBulkOperation,
-  WriteOpResult,
 } from 'mongodb';
 import { Observable } from 'rxjs';
-import { map, mapTo } from 'rxjs/operators';
-import db from '../db/db';
+import { map, mapTo, switchMap } from 'rxjs/operators';
+import dbMo from '../db/db';
+import db$ from '../db/db.factory';
 import { IResp, IRespDb } from './responsesimple.interface';
 
 import {ICoinHistory, ITimePrice} from '../coinmarketdata/coin-history.interface';
@@ -20,30 +15,34 @@ class InterfazCoins {
   public static init(): InterfazCoins {
     return new InterfazCoins();
   }
-  
+
   public collectionName = 'responses';
   public getAll(): Observable<IRespDb[]> {
-    return db.getAll(this.collectionName)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getAll(db, this.collectionName)),
       map((res) => res as IRespDb[]),
     );
   }
   public getOne(attrib: object): Observable<IRespDb> {
-    return db.getOne(this.collectionName, attrib)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getOne((db), this.collectionName, attrib)),
       map((object) => object as IRespDb),
     );
   }
   public getByMongoId(idMongo: ObjectId): Observable<IRespDb> {
-    return db.getByMongoId(this.collectionName, idMongo)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getByMongoId((db), this.collectionName, idMongo)),
       map((res) => res as IRespDb),
     );
   }
   public getLast(): Observable<IRespDb> {
     // return this.getHistoryByCount(1);
-    return db.getLast(this.collectionName)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getLast((db), this.collectionName)),
       map((respOb) => respOb as IRespDb),
     );
   }
@@ -52,8 +51,9 @@ class InterfazCoins {
    * @param limit límite de emisiones de IRespDb
    */
   public getHistoryByCount(limit: number): Observable<IRespDb> {
-    return db.getHistory(this.collectionName, limit)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getHistory((db), this.collectionName, limit)),
       map((historyobject) => historyobject as IRespDb),
     );
   }
@@ -71,8 +71,9 @@ class InterfazCoins {
         $lt: dateEnd,
       },
     };
-    return db.getMany(this.collectionName, filter)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getMany((db), this.collectionName, filter)),
       map((result) => result as IRespDb[]),
     );
   }
@@ -115,26 +116,32 @@ class InterfazCoins {
 
   }
   public getMany(attribs: object): Observable<IResp[]> {
-    return db.getMany(this.collectionName, attribs)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.getMany((db), this.collectionName, attribs)),
       map((result) => result as IResp[]),
     );
   }
   public delAll(): Observable<DeleteWriteOpResultObject> {
-    return db.delAll(this.collectionName);
+    return db$
+    .pipe(
+      switchMap((db) => dbMo.delAll((db), this.collectionName)),
+    );
   }
   public delMany(atributos: object): Observable<DeleteWriteOpResultObject> {
-    return db.delMany(this.collectionName, atributos);
+    return db$
+    .pipe(switchMap((db) => dbMo.delMany((db), this.collectionName, atributos)));
   }
   public delByMongoId(idMongo: ObjectId): Observable<DeleteWriteOpResultObject> {
-    return db.delByMongoId(this.collectionName, idMongo);
+    return db$.pipe(switchMap((db) => dbMo.delByMongoId((db), this.collectionName, idMongo)));
   }
-  public insertOne(coinsResponse: object): Observable<InsertOneWriteOpResult> {
-    return db.insertOne(this.collectionName, coinsResponse);
+  public insertOne(coinsResponse: IResp): Observable<InsertOneWriteOpResult> {
+    return db$.pipe(switchMap((db) => dbMo.insertOne((db), this.collectionName, coinsResponse)));
   }
   public insertMany(respCoinsArray: IResp[]): Observable<boolean> {
-    return db.insertMany(this.collectionName, respCoinsArray)
+    return db$
     .pipe(
+      switchMap((db) => dbMo.insertMany((db), this.collectionName, respCoinsArray)),
       mapTo(true),
     );
   }
