@@ -20,10 +20,13 @@ var CoinsRoute = /** @class */ (function () {
         dataResponse$
             .subscribe(function (dataResponse) {
             console.log(dataResponse.data);
-            var dataResultArray = dataResponse.data.filter(function (elto) {
-                return elto.name === 'bitcoin' || elto.name === 'ethereum';
-            });
-            dataResponse.status.timestamp = new Date();
+            /* const dataResultArray = dataResponse.data.filter((elto) => {
+              return elto.name === 'bitcoin' || elto.name === 'ethereum';
+            }); */
+            // cojo los primeros 10 elementos
+            var dataResultArray = dataResponse.data.slice(0, 10);
+            // asignar donde se guarda
+            // dataResponse.status.timestamp = new Date();
             res.send(dataResultArray);
             next();
         });

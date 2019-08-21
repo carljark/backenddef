@@ -33,10 +33,13 @@ class CoinsRoute {
     dataResponse$
     .subscribe((dataResponse) => {
       console.log(dataResponse.data);
-      const dataResultArray = dataResponse.data.filter((elto) => {
+      /* const dataResultArray = dataResponse.data.filter((elto) => {
         return elto.name === 'bitcoin' || elto.name === 'ethereum';
-      });
-      dataResponse.status.timestamp = new Date();
+      }); */
+      // cojo los primeros 10 elementos
+      const dataResultArray = dataResponse.data.slice(0, 10);
+      // asignar donde se guarda
+      // dataResponse.status.timestamp = new Date();
       res.send(dataResultArray);
       next();
     });

@@ -39,7 +39,9 @@ elto.onclick = getHistorial;
 const elementNameArray = new Array<HTMLParagraphElement>();
 const elementPriceArray = new Array<HTMLParagraphElement>();
 
-for (let i = 0; i < 2; i++) {
+const coinsCount = 10;
+
+for (let i = 0; i < coinsCount; i++) {
   elementNameArray.push(document.createElement('p'));
   elementPriceArray.push(document.createElement('p'));
 }
@@ -52,7 +54,7 @@ fetch(`${urlServer}/api/coins`)
     console.log(myjson);
     const divData = document.getElementById('data');
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < coinsCount; i++) {
       const eltoDiv = document.createElement('div');
       eltoDiv.className = 'fila';
       elementNameArray[i].textContent = myjson[i].name;
