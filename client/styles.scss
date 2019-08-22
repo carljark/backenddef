@@ -11,7 +11,7 @@ body {
 }
 .container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: flex-start;
   align-items: center;
   height: auto;
@@ -99,13 +99,14 @@ body {
 
 .chart {
   width: 100%;
-  padding: 2%;
+  padding: 0;
   position: relative;
+  align-self: flex-start;
 
 }
 
 svg {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
 }
@@ -147,9 +148,35 @@ svg {
   stroke-dasharray: 3,3;
 }
 
+.hover-line.y-hover-line {
+  stroke-width: 1px;
+}
+.hover-line.x-hover-line {
+  stroke-width: 1px;
+}
+
 .graphic_title_text {
   font-family: Dosis-regular,sans-serif;
   font-size: 20px;
   line-height: 1.5;
+}
+
+.text_tooltip {
+  font-weight: bold;
+  font-size: 18px;
+  font-family: sans-serif;
+}
+
+$break-small: 1024px;
+@media screen and (max-width: $break-small) {
+  .container {
+    flex-direction: column;
+  }
+  .text_tooltip {
+    font-size: 20px;
+  }
+  .axis {
+    font: 10px sans-serif;
+  }
 }
 

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import * as moment from 'moment';
 import { from, Observable, of } from 'rxjs';
-import { catchError, concatMap, delay, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, delay, mapTo, mergeMap, switchMap } from 'rxjs/operators';
 import ICoinHistory from './coin-history.interface';
 import timeFormatDefaultLocale from './d3-timeformatdefaultlocale';
 import ITimePrice from './timeprice.interface';
@@ -14,7 +14,7 @@ interface IScales {
 }
 
 export class GraphLineComponent {
-    public d: ITimePrice;
+    public d: ITimePrice = {price: 0, timestamp: new Date()};
     public panX: any;
     public panY: any;
     public scaleMultiplier: any;
@@ -41,26 +41,29 @@ export class GraphLineComponent {
     public chartProps = {} as IScales;
     public gX: d3.Selection<SVGGElement, {}, null, undefined>;
     public gY: d3.Selection<SVGGElement, {}, null, undefined>;
-    public drawedLines: Array<d3.Selection<SVGGElement, {}, null, undefined>>;
     public lineSvg: d3.Selection<SVGGElement, {}, null, undefined>;
     public view: d3.Selection<SVGGElement, {}, null, undefined>;
     public innerSpace: d3.Selection<SVGGElement, {}, null, undefined>;
     public svgViewport: d3.Selection<SVGGElement, {}, null, undefined>;
-    public tooltip: d3.Selection<SVGGElement, {}, null, undefined>;
-    public tooltipTitle: d3.Selection<SVGGElement, {}, null, undefined>;
-    public tooltipText: d3.Selection<SVGGElement, {}, null, undefined>;
     public titleSvg: d3.Selection<SVGGElement, {}, null, undefined>;
     public focus: d3.Selection<SVGGElement, {}, null, undefined>;
+    public textToolTip: d3.Selection<SVGTextElement, {}, null, undefined>;
     public zoom: d3.ZoomBehavior<Element, {}>;
     public xAxis: d3.Axis<number | { valueOf(): number }>;
     public yAxis: d3.Axis<number | { valueOf(): number }>;
-    public lineGraphElement = document.getElementById('linechart');
+    public lineGraphElement: HTMLElement;
     public linea1: ICoinHistory;
     public titleGraph = '';
     constructor(
         public lineas: ICoinHistory[],
     ) {
         this.ngOnInit();
+    }
+    public removeSvg$(): Observable<boolean> {
+        return of(d3.select('svg').remove())
+        .pipe(
+            mapTo(true),
+        );
     }
     public getLine1(): Observable<ICoinHistory> {
         return new Observable<ICoinHistory>((ob) => {
@@ -87,24 +90,24 @@ export class GraphLineComponent {
     }
 
     public ngOnInit() {
+
+        /* this.removeSvg$()
+        .pipe(switchMap((ok) => this.getTitles())
+        ) */
         this.getTitles()
         .pipe(
-        mergeMap((titles) => this.getLine1()),
-        switchMap((lin) => this.defineChart$()),
-        switchMap((ok) => from(this.lineas)),
-        mergeMap((lin) => this.drawLine$(lin)),
-        delay(1000),
-        concatMap((lin) => this.addToolTips$(lin)),
-        concatMap((lin) => this.addEventsArea()),
-        catchError(() => of('error')),
+            mergeMap((titles) => this.getLine1()),
+            switchMap((lin) => this.defineChart$()),
+            switchMap((ok) => from(this.lineas)),
+            mergeMap((lin) => this.drawLine$(lin)),
+            delay(1000),
+            concatMap((lin) => this.addToolTips$(lin)),
+            concatMap((lin) => this.addEventsArea()),
+            catchError(() => of('error')),
         )
         .subscribe((ok) => {
         this.addTitleGraph();
         });
-    }
-    public deleteSvg() {
-        // d3.select(this.element.nativeElement).select('svg').remove();
-        d3.select(this.lineGraphElement).remove();
     }
     public defineChart$(): Observable<boolean> {
         return new Observable<boolean>((ob) => {
@@ -113,6 +116,7 @@ export class GraphLineComponent {
         });
     }
     public defineChart() {
+        this.lineGraphElement = document.getElementById('linechart');
         this.svgViewport = d3
         .select(this.lineGraphElement)
         .append('svg')
@@ -198,9 +202,7 @@ export class GraphLineComponent {
             .attr('class', 'zoom')
             .attr('width', this.width)
             .attr('height', this.height)
-            .on('mouseover', () => {
-                this.focus.style('display', null);
-            })
+            .on('mouseover', this.mouseover.bind(this))
             .on('mouseout', () => {
                 this.focus.style('display', 'none');
             })
@@ -284,43 +286,55 @@ export class GraphLineComponent {
     });
     }
     public addToolTips(line: ICoinHistory) {
-        // activamos el evento "mouseover" para la linea del argumento
-        // se itera para cada punto de la línea
-        // usando la seleccion de circulos dibujados en cada punto
-        // no está claro como se itera sin usar la variable i
-        // for (let i of line.timePriceArray) {
-            this.focus = this.innerSpace
-            .append('g')
-            .attr('class', 'this.focus')
-            .style('display', 'none');
+        this.focus = this.innerSpace
+        .append('g')
+        .attr('class', 'this.focus')
+        .style('display', 'none');
 
-            this.focus
-            .append('line')
-            .attr('class', 'x-hover-line hover-line')
-            .attr('y1', 0)
-            .attr('y2', this.height)
-            .attr('pointer-events', 'none');
+        this.focus
+        .append('line')
+        .attr('class', 'x-hover-line hover-line')
+        .attr('y1', 0)
+        .attr('y2', this.height)
+        .attr('pointer-events', 'none');
 
-            this.focus
-            .append('line')
-            .attr('class', 'y-hover-line hover-line')
-            .attr('x1', this.width)
-            .attr('x2', this.width)
-            .attr('pointer-events', 'none');
+        this.focus
+        .append('line')
+        .attr('class', 'y-hover-line hover-line')
+        .attr('x1', 0)
+        .attr('x2', this.width)
+        .attr('pointer-events', 'none');
 
-            this.focus
-            .append('circle')
-            .attr('r', 2)
-            .attr('pointer-events', 'none');
+        this.focus
+        .append('circle')
+        .attr('r', 2)
+        .attr('pointer-events', 'none');
 
-            this.focus
-            .append('text')
-            .attr('x', 15)
-            .attr('dy', '.31em');
-        // }
+        this.textToolTip = this.focus
+        .append('text')
+        .attr('id', 'textToolTip')
+        .attr('class', 'text_tooltip')
+        .attr('text-anchor', 'end')
+        .attr('y', -20)
+        .attr('dy', '.31em');
+    }
+
+    public getDataPoint(): string {
+        if (this.d) {
+            const hora = moment(this.d.timestamp).format('DD/MM HH:mm');
+            const precioRedondeado = Math.round(this.d.price * 100) / 100;
+            return `${hora}h: ${precioRedondeado}€`;
+        } else {
+            return 'no data';
+        }
     }
 
     public touchStart(datum: any, j: any, nodes: any) {
+        this.focus.style('display', null);
+        this.mousemove(datum, j, nodes);
+    }
+
+    public mouseover(datum: any, j: any, nodes: any) {
         this.focus.style('display', null);
         this.mousemove(datum, j, nodes);
     }
@@ -338,7 +352,13 @@ export class GraphLineComponent {
         const d0 = this.linea1.timePriceArray[i - 1];
         // console.log('d0: ', d0);
 
-        const d1 = this.linea1.timePriceArray[i];
+        const aLength = this.linea1.timePriceArray.length;
+        let d1: ITimePrice;
+        if (i >= this.linea1.timePriceArray.length) {
+            d1 = this.linea1.timePriceArray[aLength - 1];
+        } else {
+            d1 = this.linea1.timePriceArray[i];
+        }
         // console.log('d1: ', d1);
 
         this.d =
@@ -351,6 +371,7 @@ export class GraphLineComponent {
     }
 
     public moveToolTip() {
+        let distanciax: number;
         if (this.newxScale) {
             this.focus
             .attr(
@@ -359,6 +380,9 @@ export class GraphLineComponent {
                     new Date(this.d.timestamp),
                 )},${this.newyScale(this.d.price)})`);
 
+            distanciax = this.newxScale(new Date(this.d.timestamp));
+            // console.log('distanciax: ', distanciax);
+
         } else {
             this.focus
             .attr(
@@ -366,6 +390,9 @@ export class GraphLineComponent {
                 `translate(${this.chartProps.xScale(
                     new Date(this.d.timestamp),
                 )},${this.chartProps.yScale(this.d.price)})`);
+
+            distanciax = this.chartProps.xScale(new Date(this.d.timestamp));
+            // console.log('distanciax: ', distanciax);
 
         }
 
@@ -377,16 +404,20 @@ export class GraphLineComponent {
         } */
         // console.log(this.chartProps.xScale(new Date(d.date)));
 
-        const text: any = this.focus
-            .select('text')
-            .text(
-            () =>
-                `${moment(this.d.timestamp).format('DD/MM HH:mm')}h: ${Math.round(
-                this.d.price * 10,
-                ) / 10}`,
-            );
+        this.textToolTip
+        .text(this.getDataPoint.bind(this));
 
-        const bbox = text.node().getBBox();
+        const txtNode = this.textToolTip.node() as SVGGElement;
+
+        const bbox = txtNode.getBBox();
+
+        if (bbox.width + 10 > distanciax) {
+            this.textToolTip
+            .attr('text-anchor', 'start');
+        } else {
+            this.textToolTip
+            .attr('text-anchor', 'end');
+        }
 
         this.focus.selectAll('rect').remove();
 
@@ -397,9 +428,11 @@ export class GraphLineComponent {
             .attr('width', bbox.width)
             .attr('height', bbox.height)
             .style('fill', 'white')
-            .style('fill-opacity', '.3')
+            .style('fill-opacity', '.9')
             .style('stroke', '#666')
-            .style('stroke-width', '1.5px');
+            .style('stroke-width', '0.5px');
+
+        this.focus.node().insertBefore(txtNode, null);
 
         let newy2 = 0;
 
@@ -415,10 +448,7 @@ export class GraphLineComponent {
             .select('.x-hover-line')
             .attr('y2', this.height - newy2);
 
-        this.focus.select('.y-hover-line').attr('x2', this.width + this.width);
-
-        // if (this.d3eventtransform) {
-        //     this.view.attr('transform', this.d3eventtransform);
-        // }
+        // no funciona la linea horizontal
+        this.focus.select('.y-hover-line').attr('x2', - distanciax);
     }
 }
