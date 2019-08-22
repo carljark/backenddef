@@ -11,4 +11,4 @@ const copyToDist = (file: string) => {
 };
 
 copyToDist('index.html');
-copyToDist('styles.css');
+// copyToDist('styles.css');

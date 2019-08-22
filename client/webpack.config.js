@@ -13,6 +13,16 @@ const config = {
     module: {
         rules: [
             {
+                test: /\.scss$/,
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader'
+                    },
+                    'sass-loader?sourceMap'
+                ]
+            },
+            {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/

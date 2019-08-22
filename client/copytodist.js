@@ -11,4 +11,4 @@ var copyToDist = function (file) {
     });
 };
 copyToDist('index.html');
-copyToDist('styles.css');
+// copyToDist('styles.css');

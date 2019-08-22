@@ -5,9 +5,10 @@ import ISimpleCoin from './simplecoin.interface';
 import urlServer from './environment';
 
 import ICoinHistory from './coin-history.interface';
-import ITimePrice from './timeprice.interface';
 
-const elto = document.getElementById('histbutton');
+import '../styles.scss';
+
+// const elto = document.getElementById('histbutton');
 const selectElto = document.getElementById('coinname') as HTMLSelectElement;
 // const divHistory = document.getElementById('history');
 
@@ -34,14 +35,19 @@ const getHistorial = () => {
   });
 
 };
-elto.onclick = getHistorial;
+// elto.onclick = getHistorial;
+selectElto.onchange = getHistorial;
 
 const elementNameArray = new Array<HTMLParagraphElement>();
 const elementPriceArray = new Array<HTMLParagraphElement>();
+const selectEltoArray = new Array<HTMLOptionElement>();
 
-for (let i = 0; i < 2; i++) {
+const coinsCount = 10;
+
+for (let i = 0; i < coinsCount; i++) {
   elementNameArray.push(document.createElement('p'));
   elementPriceArray.push(document.createElement('p'));
+  selectEltoArray.push(document.createElement('option'));
 }
 
 fetch(`${urlServer}/api/coins`)
@@ -52,7 +58,7 @@ fetch(`${urlServer}/api/coins`)
     console.log(myjson);
     const divData = document.getElementById('data');
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < coinsCount; i++) {
       const eltoDiv = document.createElement('div');
       eltoDiv.className = 'fila';
       elementNameArray[i].textContent = myjson[i].name;
@@ -60,6 +66,10 @@ fetch(`${urlServer}/api/coins`)
       eltoDiv.appendChild(elementNameArray[i]);
       eltoDiv.appendChild(elementPriceArray[i]);
       divData.appendChild(eltoDiv);
+
+      selectEltoArray[i].text = myjson[i].name;
+      selectEltoArray[i].value = myjson[i].name;
+      selectElto.options.add(selectEltoArray[i]);
     }
 
     // después de la primera llamada vamos a conectarnos
@@ -68,9 +78,11 @@ fetch(`${urlServer}/api/coins`)
     iosocket.on('coin update', (emision: ISimpleCoin[]) => {
       emision.forEach((coin, index) => {
         elementNameArray[index].textContent = coin.name;
-        console.log('coin.price: ', coin.price);
+        // console.log('coin.price: ', coin.price);
         elementPriceArray[index].textContent = coin.price.toString();
       });
-      console.log('emision: ', emision);
+      // console.log('emision: ', emision);
     });
+    // elto.click();
+    getHistorial();
   });

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var operators_1 = require("rxjs/operators");
 var db_1 = __importDefault(require("../db/db"));
+var db_factory_1 = __importDefault(require("../db/db.factory"));
 var InterfazCoins = /** @class */ (function () {
     function InterfazCoins() {
         this.collectionName = 'responses';
@@ -13,29 +14,34 @@ var InterfazCoins = /** @class */ (function () {
         return new InterfazCoins();
     };
     InterfazCoins.prototype.getAll = function () {
-        return db_1.default.getAll(this.collectionName)
-            .pipe(operators_1.map(function (res) { return res; }));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getAll(db, _this.collectionName); }), operators_1.map(function (res) { return res; }));
     };
     InterfazCoins.prototype.getOne = function (attrib) {
-        return db_1.default.getOne(this.collectionName, attrib)
-            .pipe(operators_1.map(function (object) { return object; }));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getOne((db), _this.collectionName, attrib); }), operators_1.map(function (object) { return object; }));
     };
     InterfazCoins.prototype.getByMongoId = function (idMongo) {
-        return db_1.default.getByMongoId(this.collectionName, idMongo)
-            .pipe(operators_1.map(function (res) { return res; }));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getByMongoId((db), _this.collectionName, idMongo); }), operators_1.map(function (res) { return res; }));
     };
     InterfazCoins.prototype.getLast = function () {
+        var _this = this;
         // return this.getHistoryByCount(1);
-        return db_1.default.getLast(this.collectionName)
-            .pipe(operators_1.map(function (respOb) { return respOb; }));
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getLast((db), _this.collectionName); }), operators_1.map(function (respOb) { return respOb; }));
     };
     /**
      * Emite una cadena de respuestas, no una matriz.
      * @param limit límite de emisiones de IRespDb
      */
     InterfazCoins.prototype.getHistoryByCount = function (limit) {
-        return db_1.default.getHistory(this.collectionName, limit)
-            .pipe(operators_1.map(function (historyobject) { return historyobject; }));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getHistory((db), _this.collectionName, limit); }), operators_1.map(function (historyobject) { return historyobject; }));
     };
     /**
      * Devuelve todas las respuestas
@@ -45,14 +51,15 @@ var InterfazCoins = /** @class */ (function () {
      * @param dateEnd Fecha Final
      */
     InterfazCoins.prototype.getByDateRange = function (dateInit, dateEnd) {
+        var _this = this;
         var filter = {
             'status.timestamp': {
                 $gt: dateInit,
                 $lt: dateEnd,
             },
         };
-        return db_1.default.getMany(this.collectionName, filter)
-            .pipe(operators_1.map(function (result) { return result; }));
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getMany((db), _this.collectionName, filter); }), operators_1.map(function (result) { return result; }));
     };
     /**
      * Devuelve un objeto con el name y un array con el timestamp y el price
@@ -89,24 +96,32 @@ var InterfazCoins = /** @class */ (function () {
         }));
     };
     InterfazCoins.prototype.getMany = function (attribs) {
-        return db_1.default.getMany(this.collectionName, attribs)
-            .pipe(operators_1.map(function (result) { return result; }));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.getMany((db), _this.collectionName, attribs); }), operators_1.map(function (result) { return result; }));
     };
     InterfazCoins.prototype.delAll = function () {
-        return db_1.default.delAll(this.collectionName);
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.delAll((db), _this.collectionName); }));
     };
     InterfazCoins.prototype.delMany = function (atributos) {
-        return db_1.default.delMany(this.collectionName, atributos);
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.delMany((db), _this.collectionName, atributos); }));
     };
     InterfazCoins.prototype.delByMongoId = function (idMongo) {
-        return db_1.default.delByMongoId(this.collectionName, idMongo);
+        var _this = this;
+        return db_factory_1.default.pipe(operators_1.switchMap(function (db) { return db_1.default.delByMongoId((db), _this.collectionName, idMongo); }));
     };
     InterfazCoins.prototype.insertOne = function (coinsResponse) {
-        return db_1.default.insertOne(this.collectionName, coinsResponse);
+        var _this = this;
+        return db_factory_1.default.pipe(operators_1.switchMap(function (db) { return db_1.default.insertOne((db), _this.collectionName, coinsResponse); }));
     };
     InterfazCoins.prototype.insertMany = function (respCoinsArray) {
-        return db_1.default.insertMany(this.collectionName, respCoinsArray)
-            .pipe(operators_1.mapTo(true));
+        var _this = this;
+        return db_factory_1.default
+            .pipe(operators_1.switchMap(function (db) { return db_1.default.insertMany((db), _this.collectionName, respCoinsArray); }), operators_1.mapTo(true));
     };
     return InterfazCoins;
 }());

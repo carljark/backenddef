@@ -4,77 +4,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
-var getsampledata_function_1 = __importDefault(require("../coinmarketdata/getsampledata.function"));
-var sampleDataResponse = getsampledata_function_1.default();
+var getdata_function_1 = __importDefault(require("../coinmarketdata/getdata.function"));
+var dataResponse$ = getdata_function_1.default();
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
-// fs.writeFileSync('./prueba.json', jsonData, 'utf8');
-// callSample();
 var CoinsRoute = /** @class */ (function () {
     function CoinsRoute() {
-        //   public pricesArray: IDataCoin[] = [];
-        this.pricesArray = [];
         this.router = express_1.Router();
         this.router.use(express_1.json());
         this.router.use(express_1.urlencoded({ extended: false }));
         this.routes();
-        // actualizamos los precios cada 60 segundos
-        // sustituimos la llamada por los resultados guardados
-        // para pruebas
-        this.pricesArray = sampleDataResponse.data;
-        console.log(this.pricesArray);
-        /* callSample()
-          .then((response: IresponseDataCoin) => {
-            console.log('bitcoin: ', response.data[0]);
-            this.pricesArray = response.data;
-            const jsD = JSON.stringify(response);
-            // fs.writeFileSync('./samplecurrencylisting02.json', jsD, 'utf8');
-          })
-          .catch((err) => {
-            console.log('API call error:', err.message);
-          }); */
-        // actualizo los precios desde server.ts
-        // this.updatePrices();
     }
     CoinsRoute.prototype.mainRoute = function (req, res, next) {
         // al acceder a esta ruta establecemos una conexion permanente
         // con el cliente a traves de websockets con socket.io
-        var dataResultArray = this.pricesArray.filter(function (elto) {
-            return elto.name === 'bitcoin' || elto.name === 'ethereum';
+        dataResponse$
+            .subscribe(function (dataResponse) {
+            console.log(dataResponse.data);
+            /* const dataResultArray = dataResponse.data.filter((elto) => {
+              return elto.name === 'bitcoin' || elto.name === 'ethereum';
+            }); */
+            // cojo los primeros 10 elementos
+            var dataResultArray = dataResponse.data.slice(0, 10);
+            // asignar donde se guarda
+            // dataResponse.status.timestamp = new Date();
+            res.send(dataResultArray);
+            next();
         });
-        // console.log(dataResultArray);
-        sampleDataResponse.status.timestamp = new Date();
-        // como al refrescar el navegador se rompe el servidor
-        // voy a obtener el ultimo _id insertado antes de guardar
-        // CoinsInterf.insertOne({_id: new ObjectId(new Date().valueOf()), ...sampleDataResponse})
-        // .subscribe((resultInsertOne) => {
-        //   console.log('result de insertar la primera response: ', resultInsertOne.result);
-        // });
-        res.send(dataResultArray);
-        next();
     };
     CoinsRoute.prototype.bitCoinRoute = function (req, res, next) {
-        var bitcoin = this.pricesArray.find(function (elto) {
-            return elto.name === 'bitcoin';
+        dataResponse$
+            .subscribe(function (dataResponse) {
+            var bitcoin = dataResponse.data.find(function (elto) {
+                return elto.name === 'bitcoin';
+            });
+            console.log(bitcoin);
+            if (bitcoin) {
+                res.json(bitcoin.price);
+            }
+            else {
+                res.send('no se ha encontrado bitcoin');
+            }
         });
-        console.log(bitcoin);
-        if (bitcoin) {
-            res.json(bitcoin.price);
-        }
-        else {
-            res.send('no se ha encontrado bitcoin');
-        }
     };
     CoinsRoute.prototype.ethereumCoinRoute = function (req, res, next) {
-        var ethereum = this.pricesArray.find(function (elto) {
-            return elto.name === 'ethereum';
+        dataResponse$
+            .subscribe(function (dataResponse) {
+            var ethereum = dataResponse.data.find(function (elto) {
+                return elto.name === 'ethereum';
+            });
+            console.log(ethereum);
+            if (ethereum) {
+                res.json(ethereum.price);
+            }
+            else {
+                res.send('no se ha encontrado ethereum');
+            }
         });
-        console.log(ethereum);
-        if (ethereum) {
-            res.json(ethereum.price);
-        }
-        else {
-            res.send('no se ha encontrado ethereum');
-        }
     };
     CoinsRoute.prototype.getHistory = function (req, res, next) {
         coins_responses_1.default.getAll()
