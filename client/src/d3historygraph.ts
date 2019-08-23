@@ -8,6 +8,8 @@ import ITimePrice from './timeprice.interface';
 
 import config from './environment';
 
+import changeWidth$ from './responsive';
+
 d3.timeFormatDefaultLocale(timeFormatDefaultLocale);
 
 interface IScales {
@@ -22,6 +24,9 @@ export class GraphLineComponent {
             mapTo(true),
         );
     }
+    public txtNode: SVGTextElement;
+    public bbox: DOMRect;
+    public distanciax: number;
     public d: ITimePrice = {price: 0, timestamp: new Date()};
     public panX: any;
     public panY: any;
@@ -66,6 +71,11 @@ export class GraphLineComponent {
         public lineas: ICoinHistory[],
     ) {
         this.ngOnInit();
+        changeWidth$
+        .subscribe((mediaString) => {
+            console.log('detectado cambio de ancho', mediaString);
+            this.recalculateWidths();
+        });
     }
     public onclickremove() {
         document.getElementById(`${this.titleGraph}data`).className = 'fila';
@@ -206,8 +216,8 @@ export class GraphLineComponent {
 
         const removeRectangle = this.svgViewport
         .append('rect')
-        .attr('x', 0)
-        .attr('y', 0)
+        .attr('x', 5)
+        .attr('y', 5)
         .attr('width', 30)
         .attr('height', 30)
         .attr('fill', 'red')
@@ -216,22 +226,20 @@ export class GraphLineComponent {
         const removeAspa1 = this.svgViewport
         .append('line')
         .attr('class', 'aspas')
-        .attr('x1', 30)
-        .attr('x2', 0)
-        .attr('y1', 0)
-        .attr('y2', 30)
+        .attr('x1', 35)
+        .attr('x2', 5)
+        .attr('y1', 5)
+        .attr('y2', 35)
         .attr('pointer-events', 'none');
 
         const removeAspa2 = this.svgViewport
         .append('line')
         .attr('class', 'aspas')
-        .attr('x1', 0)
-        .attr('x2', 30)
-        .attr('y1', 0)
-        .attr('y2', 30)
-        .attr('pointer-events', 'none')
-
-        
+        .attr('x1', 5)
+        .attr('x2', 35)
+        .attr('y1', 5)
+        .attr('y2', 35)
+        .attr('pointer-events', 'none');
 
         /* d3.xml(`${config.urlServer}/closeicon.svg`)
         .then((data) => {
@@ -432,7 +440,6 @@ export class GraphLineComponent {
     }
 
     public moveToolTip() {
-        let distanciax: number;
         if (this.newxScale) {
             this.focus
             .attr(
@@ -441,7 +448,7 @@ export class GraphLineComponent {
                     new Date(this.d.timestamp),
                 )},${this.newyScale(this.d.price)})`);
 
-            distanciax = this.newxScale(new Date(this.d.timestamp));
+            this.distanciax = this.newxScale(new Date(this.d.timestamp));
             // console.log('distanciax: ', distanciax);
 
         } else {
@@ -452,7 +459,7 @@ export class GraphLineComponent {
                     new Date(this.d.timestamp),
                 )},${this.chartProps.yScale(this.d.price)})`);
 
-            distanciax = this.chartProps.xScale(new Date(this.d.timestamp));
+            this.distanciax = this.chartProps.xScale(new Date(this.d.timestamp));
             // console.log('distanciax: ', distanciax);
 
         }
@@ -468,35 +475,27 @@ export class GraphLineComponent {
         this.textToolTip
         .text(this.getDataPoint.bind(this));
 
-        const txtNode = this.textToolTip.node() as SVGTextElement;
-
-        let bbox;
-
-        bbox = txtNode.getBBox();
-
-        if (bbox.width + 10 > distanciax) {
-            this.textToolTip
-            .attr('text-anchor', 'start');
-            bbox = txtNode.getBBox();
-        } else {
-            this.textToolTip
-            .attr('text-anchor', 'end');
-        }
-
+        // comprobar que se puede mover en vez de eliminar y crear
         this.focus.selectAll('rect').remove();
+
+        // si no funciona meter en un observable
+        this.calculateBbox();
+        // console.log('this.bbox en moveTooltip: ', this.bbox);
 
         const rect = this.focus
             .append('rect')
-            .attr('x', bbox.x)
-            .attr('y', bbox.y)
-            .attr('width', bbox.width)
-            .attr('height', bbox.height)
+            .attr('x', this.bbox.x)
+            .attr('y', this.bbox.y)
+            .attr('width', this.bbox.width)
+            .attr('height', this.bbox.height)
             .style('fill', 'white')
             .style('fill-opacity', '.9')
             .style('stroke', '#666')
             .style('stroke-width', '0.5px');
 
-        this.focus.node().insertBefore(txtNode, null);
+        this.txtNode = this.textToolTip.node() as SVGTextElement;
+
+        this.focus.node().insertBefore(this.txtNode, null);
 
         let newy2 = 0;
 
@@ -513,6 +512,26 @@ export class GraphLineComponent {
             .attr('y2', this.height - newy2);
 
         // no funciona la linea horizontal
-        this.focus.select('.y-hover-line').attr('x2', - distanciax);
+        this.focus.select('.y-hover-line').attr('x2', - this.distanciax);
+    }
+    public recalculateWidths() {
+        this.moveToolTip();
+    }
+
+    public calculateBbox(): DOMRect {
+
+        this.txtNode = this.textToolTip.node() as SVGTextElement;
+        this.bbox = this.txtNode.getBBox();
+
+        if (this.bbox.width + 10 > this.distanciax) {
+            this.textToolTip
+            .attr('text-anchor', 'start');
+            this.bbox = this.txtNode.getBBox();
+        } else {
+            this.textToolTip
+            .attr('text-anchor', 'end');
+        }
+        // console.log('this.bbox en calculateBbox: ', this.bbox);
+        return this.bbox;
     }
 }
