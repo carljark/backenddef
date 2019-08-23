@@ -6,6 +6,8 @@ import ICoinHistory from './coin-history.interface';
 import timeFormatDefaultLocale from './d3-timeformatdefaultlocale';
 import ITimePrice from './timeprice.interface';
 
+import config from './environment';
+
 d3.timeFormatDefaultLocale(timeFormatDefaultLocale);
 
 interface IScales {
@@ -96,16 +98,16 @@ export class GraphLineComponent {
         ) */
         this.getTitles()
         .pipe(
-            mergeMap((titles) => this.getLine1()),
-            switchMap((lin) => this.defineChart$()),
-            switchMap((ok) => from(this.lineas)),
+            mergeMap(() => this.getLine1()),
+            switchMap(() => this.defineChart$()),
+            switchMap(() => from(this.lineas)),
             mergeMap((lin) => this.drawLine$(lin)),
             delay(1000),
-            concatMap((lin) => this.addToolTips$(lin)),
-            concatMap((lin) => this.addEventsArea()),
+            concatMap(() => this.addToolTips$()),
+            concatMap(() => this.addEventsArea()),
             catchError(() => of('error')),
         )
-        .subscribe((ok) => {
+        .subscribe(() => {
         this.addTitleGraph();
         });
     }
@@ -208,7 +210,7 @@ export class GraphLineComponent {
             })
             .on('mousemove', this.mousemove.bind(this))
             .on('touchstart', this.touchStart.bind(this))
-            .on('touchmove', this.touchStart.bind(this))
+            .on('touchmove', this.touchMove.bind(this))
             .on('touchend', () => {
                 this.focus.style('display', null);
             });
@@ -275,17 +277,17 @@ export class GraphLineComponent {
       // .attr('y', 0 - this.margin.top / 4)
       .attr('y', distTextTop)
       .attr('class', 'graphic_title_text')
-      .attr('text-anchor', 'left')
+      .attr('text-anchor', 'end')
       .text(this.titleGraph);
     }
 
-    public addToolTips$(line: ICoinHistory): Observable<boolean> {
-    return new Observable<boolean>((ob) => {
-        this.addToolTips(line);
-        ob.next(true);
-    });
+    public addToolTips$(): Observable<boolean> {
+      return new Observable<boolean>((ob) => {
+          this.addToolTips();
+          ob.next(true);
+      });
     }
-    public addToolTips(line: ICoinHistory) {
+    public addToolTips() {
         this.focus = this.innerSpace
         .append('g')
         .attr('class', 'this.focus')
@@ -321,20 +323,38 @@ export class GraphLineComponent {
 
     public getDataPoint(): string {
         if (this.d) {
-            const hora = moment(this.d.timestamp).format('DD/MM HH:mm');
+            const hora = moment(this.d.timestamp).format(config.tooltipTimeFormat);
             const precioRedondeado = Math.round(this.d.price * 100) / 100;
-            return `${hora}h: ${precioRedondeado}€`;
+            const precioToLocale = precioRedondeado.toLocaleString();
+            return `${hora}: ${precioToLocale}€`;
         } else {
             return 'no data';
         }
     }
+    public touchMove(datum: any, j: any, nodes: any) {
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
+        const d = d3.touches(nodes[j]);
 
-    public touchStart(datum: any, j: any, nodes: any) {
         this.focus.style('display', null);
         this.mousemove(datum, j, nodes);
     }
 
+    public touchStart(datum: any, j: any, nodes: any) {
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
+        const d = d3.touches(nodes[j]);
+
+        this.focus.style('display', null);
+        this.mousemove(datum, j, nodes);
+
+        // d = d3.touches(this);
+    }
+
     public mouseover(datum: any, j: any, nodes: any) {
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
+      // d = d3.touches(this);
         this.focus.style('display', null);
         this.mousemove(datum, j, nodes);
     }
@@ -407,13 +427,16 @@ export class GraphLineComponent {
         this.textToolTip
         .text(this.getDataPoint.bind(this));
 
-        const txtNode = this.textToolTip.node() as SVGGElement;
+        const txtNode = this.textToolTip.node() as SVGTextElement;
 
-        const bbox = txtNode.getBBox();
+        let bbox;
+
+        bbox = txtNode.getBBox();
 
         if (bbox.width + 10 > distanciax) {
             this.textToolTip
             .attr('text-anchor', 'start');
+            bbox = txtNode.getBBox();
         } else {
             this.textToolTip
             .attr('text-anchor', 'end');

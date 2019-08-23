@@ -15,6 +15,7 @@ import getData$ from '../coinmarketdata/getdata.function';
 const dataResponse$ = getData$();
 
 import CoinsInterf from '../modelos/coins-responses';
+import { switchMap, map, tap } from 'rxjs/operators';
 
 class CoinsRoute {
   public router: Router;
@@ -84,12 +85,32 @@ class CoinsRoute {
   }
 
   public getHistoryCoin(req: Request, res: Response, next: NextFunction): void {
-    console.log('req.params: ', req.params.name);
-    CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
-    .subscribe((history) => {
-      console.log('icoinhistory: ', history);
-      res.send(history);
-    });
+    console.log('req.params.name: ', req.params.name);
+    console.log('typeof req.params.name: ', (typeof req.params.name));
+    console.log('name in params: ', ('name' in req.params));
+    if (req.params.name !== 'undefined') {
+      dataResponse$
+      .pipe(
+        map((resp) => resp.data.map((coin) => coin.name)),
+        map((arrayName) => arrayName.findIndex((name) => name === req.params.name)),
+        tap((index) => console.log(index)),
+      )
+      .subscribe((index) => {
+        console.log('name finded: ', index);
+        if (index !== -1) {
+          CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
+          .subscribe((history) => {
+            console.log('icoinhistory: ', history);
+            res.send(history);
+          });
+        } else {
+          res.end();
+        }
+      });
+    } else {
+      res.end();
+    }
+
   }
 
   public routes() {

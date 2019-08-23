@@ -65,11 +65,6 @@ body {
   justify-content: space-between;
   flex-direction: row;
 }
-.historial {
-  background-color: whitesmoke;
-  height: 300px;
-  width: 50%;
-}
 .zoom {
   /* cursor: move; */
   fill: none;
@@ -142,17 +137,17 @@ svg {
 }
   
 .hover-line {
-  /* stroke: #6F257F; */
-  stroke: burlywood;
-  stroke-width: 2px;
+  stroke: #6F257F;
+  // stroke: burlywood;
+  stroke-width: 1px;
   stroke-dasharray: 3,3;
 }
 
 .hover-line.y-hover-line {
-  stroke-width: 1px;
+  stroke: burlywood;
 }
 .hover-line.x-hover-line {
-  stroke-width: 1px;
+  stroke-dasharray: 2,2;
 }
 
 .graphic_title_text {
@@ -162,21 +157,27 @@ svg {
 }
 
 .text_tooltip {
+  fill: darkgreen;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 12px;
   font-family: sans-serif;
 }
 
-$break-small: 1024px;
-@media screen and (max-width: $break-small) {
+$break-medium: 1024px;
+@media screen and (max-width: $break-medium) {
   .container {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
   .text_tooltip {
     font-size: 20px;
   }
-  .axis {
-    font: 10px sans-serif;
+}
+$break-small: 500px;
+@media screen and (max-width: $break-small) {
+  .container {
+    flex-direction: column-reverse;
+  }
+  .text_tooltip {
+    font-size: 30px;
   }
 }
-

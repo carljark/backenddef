@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "prestart": "tsc -w &",
-    "start": "cross-env NODE_ENV=development nodemon dist",
+    "start": "cross-env NODE_ENV=development node dist",
     "dev": "cross-env NODE_ENV=development nodemon dist",
     "build": "cross-env NODE_ENV=production tsc",
     "test": "cross-env NODE_ENV=development ts-node src/modelos/tests/coins_test_gethistoryfromdatetominsandname.ts"

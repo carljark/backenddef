@@ -7,6 +7,7 @@ var express_1 = require("express");
 var getdata_function_1 = __importDefault(require("../coinmarketdata/getdata.function"));
 var dataResponse$ = getdata_function_1.default();
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
+var operators_1 = require("rxjs/operators");
 var CoinsRoute = /** @class */ (function () {
     function CoinsRoute() {
         this.router = express_1.Router();
@@ -69,12 +70,29 @@ var CoinsRoute = /** @class */ (function () {
         });
     };
     CoinsRoute.prototype.getHistoryCoin = function (req, res, next) {
-        console.log('req.params: ', req.params.name);
-        coins_responses_1.default.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
-            .subscribe(function (history) {
-            console.log('icoinhistory: ', history);
-            res.send(history);
-        });
+        console.log('req.params.name: ', req.params.name);
+        console.log('typeof req.params.name: ', (typeof req.params.name));
+        console.log('name in params: ', ('name' in req.params));
+        if (req.params.name !== 'undefined') {
+            dataResponse$
+                .pipe(operators_1.map(function (resp) { return resp.data.map(function (coin) { return coin.name; }); }), operators_1.map(function (arrayName) { return arrayName.findIndex(function (name) { return name === req.params.name; }); }), operators_1.tap(function (index) { return console.log(index); }))
+                .subscribe(function (index) {
+                console.log('name finded: ', index);
+                if (index !== -1) {
+                    coins_responses_1.default.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
+                        .subscribe(function (history) {
+                        console.log('icoinhistory: ', history);
+                        res.send(history);
+                    });
+                }
+                else {
+                    res.end();
+                }
+            });
+        }
+        else {
+            res.end();
+        }
     };
     CoinsRoute.prototype.routes = function () {
         this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));

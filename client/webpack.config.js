@@ -5,6 +5,16 @@ const mode = process.env.NODE_ENV;
 console.log('mode: ', mode);
 
 const config = {
+    devServer: {
+        inline: true,
+        host: '0.0.0.0',
+        port: 8008,
+        disableHostCheck: true,
+        allowedHosts: [
+          '192.168.1.3',
+          '192.168.1.233'
+        ]
+    },
     entry: {
         app: './src/app.ts'
     },
