@@ -16,20 +16,21 @@ body {
   align-items: center;
   height: auto;
   width: 100%;
+  padding: 0;
+  margin: 0;
   background-color: rgb(231, 180, 139);
 }
 .tabla {
-  border-radius: 30px;
-  padding: 30px;
   font-size: 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgb(166, 161, 209);
+  max-width: 20%;
+  width: 100%;
 }
 .encabezado {
-  width: 300px;
+  width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -40,11 +41,11 @@ body {
   background-color: whitesmoke;
 }
 .data {
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0px;
   background-color: rgb(208, 240, 215);
 }
 .botones {
@@ -58,12 +59,23 @@ body {
   font-size: 12pt
 }
 .fila {
-  width: 290px;
-  padding: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 10px;
+  padding-left: 10px;
   border-style: solid;
+  border-bottom-width: 2px;
+  border-top-width: 0;
+  border-left-width: 2px;
+  border-right-width: 2px;
   display: flex;
   justify-content: space-between;
   flex-direction: row;
+}
+.fila.coinselected {
+  background-color: brown;
+  color: whitesmoke;
+  font-weight: bold;
 }
 .zoom {
   /* cursor: move; */
@@ -97,7 +109,6 @@ body {
   padding: 0;
   position: relative;
   align-self: flex-start;
-
 }
 
 svg {
@@ -143,6 +154,12 @@ svg {
   stroke-dasharray: 3,3;
 }
 
+.aspas {
+  stroke: white;
+  // stroke: burlywood;
+  stroke-width: 5px;
+}
+
 .hover-line.y-hover-line {
   stroke: burlywood;
 }
@@ -163,6 +180,10 @@ svg {
   font-family: sans-serif;
 }
 
+.pname, .pprice {
+  pointer-events: none;
+}
+
 $break-medium: 1024px;
 @media screen and (max-width: $break-medium) {
   .container {
@@ -170,6 +191,9 @@ $break-medium: 1024px;
   }
   .text_tooltip {
     font-size: 20px;
+  }
+  .tabla {
+    max-width: 100%;
   }
 }
 $break-small: 500px;
@@ -179,5 +203,9 @@ $break-small: 500px;
   }
   .text_tooltip {
     font-size: 30px;
+  }
+
+  .tabla {
+    max-width: 100%;
   }
 }

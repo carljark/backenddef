@@ -16,6 +16,12 @@ interface IScales {
 }
 
 export class GraphLineComponent {
+    public static removeSvg$(coinName: string): Observable<boolean> {
+        return of(d3.select(`#${coinName}`).remove())
+        .pipe(
+            mapTo(true),
+        );
+    }
     public d: ITimePrice = {price: 0, timestamp: new Date()};
     public panX: any;
     public panY: any;
@@ -61,11 +67,10 @@ export class GraphLineComponent {
     ) {
         this.ngOnInit();
     }
-    public removeSvg$(): Observable<boolean> {
-        return of(d3.select('svg').remove())
-        .pipe(
-            mapTo(true),
-        );
+    public onclickremove() {
+        document.getElementById(`${this.titleGraph}data`).className = 'fila';
+        // d3.select(`#${this.titleGraph}data`).attr('class', 'fila');
+        GraphLineComponent.removeSvg$(this.titleGraph);
     }
     public getLine1(): Observable<ICoinHistory> {
         return new Observable<ICoinHistory>((ob) => {
@@ -118,10 +123,12 @@ export class GraphLineComponent {
         });
     }
     public defineChart() {
+        console.log('titleGraph: ', this.titleGraph);
         this.lineGraphElement = document.getElementById('linechart');
         this.svgViewport = d3
         .select(this.lineGraphElement)
         .append('svg')
+        .attr('id', this.titleGraph)
         .style('background', 'white')
         .attr('viewBox', `0 0 ${this.svgWidth} ${this.svgHeight}`);
         this.chartProps.xScale = d3
@@ -196,6 +203,40 @@ export class GraphLineComponent {
         }
         })
         .y((d) => this.newyScale(d.price));
+
+        const removeRectangle = this.svgViewport
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', 30)
+        .attr('height', 30)
+        .attr('fill', 'red')
+        .on('click', this.onclickremove.bind(this));
+
+        const removeAspa1 = this.svgViewport
+        .append('line')
+        .attr('class', 'aspas')
+        .attr('x1', 30)
+        .attr('x2', 0)
+        .attr('y1', 0)
+        .attr('y2', 30)
+        .attr('pointer-events', 'none');
+
+        const removeAspa2 = this.svgViewport
+        .append('line')
+        .attr('class', 'aspas')
+        .attr('x1', 0)
+        .attr('x2', 30)
+        .attr('y1', 0)
+        .attr('y2', 30)
+        .attr('pointer-events', 'none')
+
+        
+
+        /* d3.xml(`${config.urlServer}/closeicon.svg`)
+        .then((data) => {
+            removeIcon.node().append(data.documentElement);
+        }); */
     }
     public addEventsArea(): Observable<boolean> {
         return new Observable<boolean>((ob) => {
@@ -277,7 +318,7 @@ export class GraphLineComponent {
       // .attr('y', 0 - this.margin.top / 4)
       .attr('y', distTextTop)
       .attr('class', 'graphic_title_text')
-      .attr('text-anchor', 'end')
+      .attr('text-anchor', 'start')
       .text(this.titleGraph);
     }
 
