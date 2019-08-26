@@ -4,10 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
+var operators_1 = require("rxjs/operators");
 var getdata_function_1 = __importDefault(require("../coinmarketdata/getdata.function"));
 var dataResponse$ = getdata_function_1.default();
 var coins_responses_1 = __importDefault(require("../modelos/coins-responses"));
-var operators_1 = require("rxjs/operators");
 var CoinsRoute = /** @class */ (function () {
     function CoinsRoute() {
         this.router = express_1.Router();
@@ -19,6 +19,7 @@ var CoinsRoute = /** @class */ (function () {
         // al acceder a esta ruta establecemos una conexion permanente
         // con el cliente a traves de websockets con socket.io
         dataResponse$
+            .pipe(operators_1.switchMap(function (dataCoinsResponse) { return coins_responses_1.default.insertOne(dataCoinsResponse); }, function (resp) { return resp; }))
             .subscribe(function (dataResponse) {
             console.log(dataResponse.data);
             /* const dataResultArray = dataResponse.data.filter((elto) => {

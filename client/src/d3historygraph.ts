@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import * as moment from 'moment';
 import { from, Observable, of } from 'rxjs';
-import { catchError, concatMap, delay, mapTo, mergeMap, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, delay, map, mapTo, mergeMap, switchMap } from 'rxjs/operators';
 import ICoinHistory from './coin-history.interface';
 import timeFormatDefaultLocale from './d3-timeformatdefaultlocale';
 import ITimePrice from './timeprice.interface';
@@ -9,6 +9,10 @@ import ITimePrice from './timeprice.interface';
 import config from './environment';
 
 import changeWidth$ from './responsive';
+
+import {SocketioService} from './socketio.service';
+
+import ISimpleCoin from './simplecoin.interface';
 
 d3.timeFormatDefaultLocale(timeFormatDefaultLocale);
 
@@ -24,6 +28,7 @@ export class GraphLineComponent {
             mapTo(true),
         );
     }
+    public formatEverd = d3.timeFormat('%d/%m %H:%M');
     public txtNode: SVGTextElement;
     public bbox: DOMRect;
     public distanciax: number;
@@ -41,7 +46,7 @@ export class GraphLineComponent {
     public bisectValue = d3.bisector((d: ITimePrice) => d.price).right;
     public svgWidth = 800;
     public svgHeight = 300;
-    public margin = { top: 30, right: 40, bottom: 50, left: 60 };
+    public margin = { top: 30, right: 40, bottom: 70, left: 100 };
     public width = this.svgWidth - this.margin.left - this.margin.right;
     public height = this.svgHeight - this.margin.top - this.margin.bottom;
     public originalLine: d3.Line<ITimePrice>;
@@ -65,17 +70,78 @@ export class GraphLineComponent {
     public xAxis: d3.Axis<number | { valueOf(): number }>;
     public yAxis: d3.Axis<number | { valueOf(): number }>;
     public lineGraphElement: HTMLElement;
-    public linea1: ICoinHistory;
+    public line1DataHistory: ICoinHistory;
     public titleGraph = '';
+    public linesDataUpdated$: Observable<ISimpleCoin[]>;
+    public mediaString = '(min-width: 321px)';
     constructor(
         public lineas: ICoinHistory[],
+        private socketioServ: SocketioService,
     ) {
         this.ngOnInit();
         changeWidth$
         .subscribe((mediaString) => {
+            this.mediaString = mediaString;
             console.log('detectado cambio de ancho', mediaString);
-            this.recalculateWidths();
+            this.recalculateWidths(mediaString);
         });
+
+        this.linesDataUpdated$ = this.socketioServ.getUpdatedCurrencies$();
+
+        this.linesDataUpdated$
+        .pipe(
+            map((currenciesDatas) => {
+                const idx = currenciesDatas.findIndex((currency) => currency.name === this.titleGraph);
+                return currenciesDatas[idx];
+            }),
+        )
+        .subscribe((currData) => {
+            console.log('currData updated: ', currData);
+            this.line1DataHistory.timePriceArray.shift();
+            this.lineas[0] = this.line1DataHistory;
+
+            this.line1DataHistory.timePriceArray.push({
+              price: currData.price,
+              timestamp: new Date(),
+            });
+
+            this.updateAxis();
+            this.recalculateWidths(this.mediaString);
+
+        });
+    }
+    public updateAxis() {
+        this.chartProps.xScale
+        .domain(d3.extent(this.line1DataHistory.timePriceArray, (d) => new Date(d.timestamp).getTime()));
+        this.chartProps.yScale
+        .domain([
+            0,
+            d3.max(
+                this.lineas,
+                (d) => Math.max(...d.timePriceArray.map((value) => value.price)) * 1.1,
+            ),
+        ]);
+        /* if (this.lineSvg) {
+            this.lineSvg
+            .attr('d', this.originalLine.bind(this)(this.line1DataHistory.timePriceArray));
+
+        } */
+
+        this.lineSvg
+        .attr('d', this.originalLine.bind(this)(this.line1DataHistory.timePriceArray));
+        if (this.d3eventtransform && this.d3eventtransform.k !== 1) {
+            console.log('d3eventTransform: ', this.d3eventtransform);
+            this.lineSvg.attr('d', this.scaledLine.bind(this)(this.line1DataHistory.timePriceArray));
+            // this.reescaleGraphic();
+            this.svgViewport.call(this.zoom.bind(this));
+        } else if (this.d3eventtransform && this.d3eventtransform.k === 1) {
+            this.lineSvg
+            .attr('d', this.originalLine.bind(this)(this.line1DataHistory.timePriceArray));
+            this.d3eventtransform = undefined;
+            this.newxScale = undefined;
+
+        }
+
     }
     public onclickremove() {
         document.getElementById(`${this.titleGraph}data`).className = 'fila';
@@ -84,7 +150,7 @@ export class GraphLineComponent {
     }
     public getLine1(): Observable<ICoinHistory> {
         return new Observable<ICoinHistory>((ob) => {
-            this.linea1 = this.lineas[0];
+            this.line1DataHistory = this.lineas[0];
             ob.next(this.lineas[0]);
         });
     }
@@ -106,6 +172,15 @@ export class GraphLineComponent {
         });
     }
 
+    public putToolTipInLastPoint(): Observable<boolean> {
+      return new Observable<boolean>((ob) => {
+        const lastIndex = this.line1DataHistory.timePriceArray.length - 1;
+        this.d = this.line1DataHistory.timePriceArray[lastIndex];
+        this.moveToolTip();
+        ob.next(true);
+      });
+    }
+
     public ngOnInit() {
 
         /* this.removeSvg$()
@@ -120,6 +195,7 @@ export class GraphLineComponent {
             delay(1000),
             concatMap(() => this.addToolTips$()),
             concatMap(() => this.addEventsArea()),
+            switchMap(() => this.putToolTipInLastPoint()),
             catchError(() => of('error')),
         )
         .subscribe(() => {
@@ -133,7 +209,6 @@ export class GraphLineComponent {
         });
     }
     public defineChart() {
-        console.log('titleGraph: ', this.titleGraph);
         this.lineGraphElement = document.getElementById('linechart');
         this.svgViewport = d3
         .select(this.lineGraphElement)
@@ -143,7 +218,7 @@ export class GraphLineComponent {
         .attr('viewBox', `0 0 ${this.svgWidth} ${this.svgHeight}`);
         this.chartProps.xScale = d3
         .scaleTime()
-        .domain(d3.extent(this.linea1.timePriceArray, (d) => new Date(d.timestamp).getTime()))
+        .domain(d3.extent(this.line1DataHistory.timePriceArray, (d) => new Date(d.timestamp).getTime()))
         .range([0, this.width])
         .clamp(true);
 
@@ -182,17 +257,19 @@ export class GraphLineComponent {
         'translate(' + this.margin.left + ',' + this.margin.top + ')',
         )
         .call(this.zoom.bind(this));
-        const formatEverd = d3.timeFormat('%d/%m %H:%M');
+        const numberOfTicks = window.innerWidth / 200;
+        console.log('numberOfTics', numberOfTicks);
         this.gX = this.innerSpace
             .append('g')
             .attr('class', 'axis axis--x')
             .attr('transform', 'translate(0,' + this.height + ')')
-            .call(this.xAxis.ticks(6).tickFormat(formatEverd));
+            .call(this.xAxis.ticks(Math.max(numberOfTicks, 2)).tickFormat(this.formatEverd));
 
         this.gY = this.innerSpace
             .append('g')
             .attr('class', 'axis axis--y')
-            .call(this.yAxis);
+            // .attr('transform', 'translate(' + this.margin.left + ',0)')
+            .call(this.yAxis.ticks(Math.max(numberOfTicks, 4)));
 
         this.originalLine = d3
             .line<ITimePrice>()
@@ -254,9 +331,9 @@ export class GraphLineComponent {
             .attr('width', this.width)
             .attr('height', this.height)
             .on('mouseover', this.mouseover.bind(this))
-            .on('mouseout', () => {
-                this.focus.style('display', 'none');
-            })
+            // .on('mouseout', () => {
+            //     this.focus.style('display', 'none');
+            // })
             .on('mousemove', this.mousemove.bind(this))
             .on('touchstart', this.touchStart.bind(this))
             .on('touchmove', this.touchMove.bind(this))
@@ -285,26 +362,22 @@ export class GraphLineComponent {
             .style('stroke', 'black')
             .attr('d', this.originalLine.bind(this)(line.timePriceArray));
     }
-    public zoomFunction() {
-        this.newxScale = d3.event.transform.rescaleX(this.chartProps.xScale);
-        this.newyScale = d3.event.transform.rescaleY(this.chartProps.yScale);
+    public reescaleGraphic() {
         // update axes
+        this.newxScale = this.d3eventtransform.rescaleX(this.chartProps.xScale);
+        this.newyScale = this.d3eventtransform.rescaleY(this.chartProps.yScale);
         this.gX.call(this.xAxis.scale(this.newxScale));
         this.gY.call(this.yAxis.scale(this.newyScale));
         this.lineSvg.call(this.xAxis.scale(this.newxScale));
         this.lineSvg.call(this.yAxis.scale(this.newyScale));
 
-        this.d3eventtransform = d3.event.transform;
-        // this.lineSvg.attr('transform', this.d3eventtransform);
-
-        // this.chartProps.xScale.domain(newDomainX);
-        // this.chartProps.yScale.domain(d3.event.transform.rescaleY(this.chartProps.yScale.domain()));
-        // console.log('se escala');
-
         this.changeLine();
 
         this.moveToolTip();
-
+    }
+    public zoomFunction() {
+        this.d3eventtransform = d3.event.transform;
+        this.reescaleGraphic();
     }
 
     public changeLine() {
@@ -340,7 +413,8 @@ export class GraphLineComponent {
         this.focus = this.innerSpace
         .append('g')
         .attr('class', 'this.focus')
-        .style('display', 'none');
+        // .style('display', 'none');
+        .style('display', 'null');
 
         this.focus
         .append('line')
@@ -374,8 +448,12 @@ export class GraphLineComponent {
         if (this.d) {
             const hora = moment(this.d.timestamp).format(config.tooltipTimeFormat);
             const precioRedondeado = Math.round(this.d.price * 100) / 100;
-            const precioToLocale = precioRedondeado.toLocaleString();
-            return `${hora}: ${precioToLocale}€`;
+            const precioToLocale = precioRedondeado
+            .toLocaleString('es-ES', {
+                currency: 'EUR',
+                style: 'currency',
+            });
+            return `${hora}: ${precioToLocale}`;
         } else {
             return 'no data';
         }
@@ -409,24 +487,26 @@ export class GraphLineComponent {
     }
 
     public mousemove(datum: any, j: any, nodes: any) {
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
         let x0;
         if (this.newxScale) {
             x0 = this.newxScale.invert(d3.mouse(nodes[j])[0]);
         } else {
             x0 = this.chartProps.xScale.invert(d3.mouse(nodes[j])[0]);
         }
-        const i = this.bisectDate(this.linea1.timePriceArray, x0, 1);
+        const i = this.bisectDate(this.line1DataHistory.timePriceArray, x0, 1);
         // console.log('i: ', i);
 
-        const d0 = this.linea1.timePriceArray[i - 1];
+        const d0 = this.line1DataHistory.timePriceArray[i - 1];
         // console.log('d0: ', d0);
 
-        const aLength = this.linea1.timePriceArray.length;
+        const aLength = this.line1DataHistory.timePriceArray.length;
         let d1: ITimePrice;
-        if (i >= this.linea1.timePriceArray.length) {
-            d1 = this.linea1.timePriceArray[aLength - 1];
+        if (i >= this.line1DataHistory.timePriceArray.length) {
+            d1 = this.line1DataHistory.timePriceArray[aLength - 1];
         } else {
-            d1 = this.linea1.timePriceArray[i];
+            d1 = this.line1DataHistory.timePriceArray[i];
         }
         // console.log('d1: ', d1);
 
@@ -514,7 +594,33 @@ export class GraphLineComponent {
         // no funciona la linea horizontal
         this.focus.select('.y-hover-line').attr('x2', - this.distanciax);
     }
-    public recalculateWidths() {
+    public recalculateWidths(changeWidth: string) {
+        const widthToNumber = parseInt(changeWidth.slice(12, 16), 10);
+        console.log('widthToNumber: ', widthToNumber);
+        const numberOfTicks = widthToNumber / 100;
+        console.log('numberOfTics: ', numberOfTicks);
+        if (changeWidth === '(max-width: 320px)') {
+          // this.gX.remove()
+          // this.gX = this.innerSpace
+          //     .append('g')
+          //     .attr('class', 'axis axis--x')
+          //     .attr('transform', 'translate(0,' + this.height + ')')
+          //     .call(this.xAxis.ticks(2).tickFormat(this.formatEverd));
+          this.gX
+          .call(this.xAxis.ticks(Math.max(numberOfTicks, 2)).tickFormat(this.formatEverd));
+          this.gY
+          .call(this.yAxis.ticks(4));
+        } else if ('(min-width: 321px)') {
+          this.gX
+          .call(this.xAxis.ticks(Math.max(numberOfTicks, 2)).tickFormat(this.formatEverd));
+          this.gY
+          .call(this.yAxis.ticks(4));
+        } else if ('(min-width: 569px)') {
+          this.gX
+          .call(this.xAxis.ticks(Math.max(6)).tickFormat(this.formatEverd));
+          this.gY
+          .call(this.yAxis.ticks(5));
+        }
         this.moveToolTip();
     }
 

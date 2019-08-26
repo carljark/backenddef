@@ -7,6 +7,7 @@ import {
   static as estaticExpress,
   urlencoded,
 } from 'express';
+import {  map, switchMap, tap } from 'rxjs/operators';
 
 import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
 
@@ -15,7 +16,6 @@ import getData$ from '../coinmarketdata/getdata.function';
 const dataResponse$ = getData$();
 
 import CoinsInterf from '../modelos/coins-responses';
-import { switchMap, map, tap } from 'rxjs/operators';
 
 class CoinsRoute {
   public router: Router;
@@ -32,6 +32,9 @@ class CoinsRoute {
     // al acceder a esta ruta establecemos una conexion permanente
     // con el cliente a traves de websockets con socket.io
     dataResponse$
+    .pipe(
+      switchMap((dataCoinsResponse) => CoinsInterf.insertOne(dataCoinsResponse), (resp) => resp),
+    )
     .subscribe((dataResponse) => {
       console.log(dataResponse.data);
       /* const dataResultArray = dataResponse.data.filter((elto) => {

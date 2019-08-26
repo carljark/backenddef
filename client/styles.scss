@@ -208,6 +208,9 @@ $break-small: 568px;
   .tabla {
     max-width: 100%;
   }
+  .axis {
+    font: 24px sans-serif;
+  }
 }
 $break-lite: 320px;
 @media screen and (max-width: $break-lite) {
@@ -220,5 +223,8 @@ $break-lite: 320px;
 
   .tabla {
     max-width: 100%;
+  }
+  .axis {
+    font: 20px sans-serif;
   }
 }
