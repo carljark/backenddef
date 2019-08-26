@@ -7,7 +7,7 @@ interface IConfig {
 
 const config: IConfig = {
   timeForUpdates: 60000,
-  tooltipTimeFormat: 'DD/MM HH[h]mm[m]',
+  tooltipTimeFormat:  'DD/MM HH[h]mm[m]ss[s]',
   urlServer: '',
 };
 

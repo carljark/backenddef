@@ -196,7 +196,7 @@ $break-medium: 1024px;
     max-width: 100%;
   }
 }
-$break-small: 500px;
+$break-small: 568px;
 @media screen and (max-width: $break-small) {
   .container {
     flex-direction: column-reverse;
@@ -207,5 +207,24 @@ $break-small: 500px;
 
   .tabla {
     max-width: 100%;
+  }
+  .axis {
+    font: 24px sans-serif;
+  }
+}
+$break-lite: 320px;
+@media screen and (max-width: $break-lite) {
+  .container {
+    flex-direction: column-reverse;
+  }
+  .text_tooltip {
+    font-size: 35px;
+  }
+
+  .tabla {
+    max-width: 100%;
+  }
+  .axis {
+    font: 20px sans-serif;
   }
 }
