@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { ContainerElement } from 'd3';
 import * as moment from 'moment';
 import { from, Observable, of } from 'rxjs';
 import { catchError, concatMap, delay, map, mapTo, mergeMap, switchMap } from 'rxjs/operators';
@@ -28,10 +29,12 @@ export class GraphLineComponent {
             mapTo(true),
         );
     }
+    public currentPointIndex: number = 0;
     public formatEverd = d3.timeFormat('%d/%m %H:%M');
     public txtNode: SVGTextElement;
     public bbox: DOMRect;
-    public distanciax: number;
+    public distanciaLeft: number;
+    public distanciaRight: number;
     public d: ITimePrice = {price: 0, timestamp: new Date()};
     public panX: any;
     public panY: any;
@@ -176,6 +179,7 @@ export class GraphLineComponent {
       return new Observable<boolean>((ob) => {
         const lastIndex = this.line1DataHistory.timePriceArray.length - 1;
         this.d = this.line1DataHistory.timePriceArray[lastIndex];
+        this.currentPointIndex = lastIndex;
         this.moveToolTip();
         ob.next(true);
       });
@@ -467,13 +471,12 @@ export class GraphLineComponent {
         this.mousemove(datum, j, nodes);
     }
 
-    public touchStart(datum: any, j: any, nodes: any) {
+    public touchStart(datum: any, j: number, nodes: ContainerElement[]) {
         d3.event.preventDefault();
         d3.event.stopPropagation();
-        const d = d3.touches(nodes[j]);
+        // const d = d3.touches(nodes[j]);
 
-        this.focus.style('display', null);
-        this.mousemove(datum, j, nodes);
+        this.calculateCurrentPoint(nodes[j]);
 
         // d = d3.touches(this);
     }
@@ -486,14 +489,17 @@ export class GraphLineComponent {
         this.mousemove(datum, j, nodes);
     }
 
-    public mousemove(datum: any, j: any, nodes: any) {
+    public mousemove(datum: any, j: number, nodes: ContainerElement[]) {
         d3.event.preventDefault();
         d3.event.stopPropagation();
+        this.calculateCurrentPoint(nodes[j]);
+    }
+    public calculateCurrentPoint(node: ContainerElement) {
         let x0;
         if (this.newxScale) {
-            x0 = this.newxScale.invert(d3.mouse(nodes[j])[0]);
+            x0 = this.newxScale.invert(d3.mouse(node)[0]);
         } else {
-            x0 = this.chartProps.xScale.invert(d3.mouse(nodes[j])[0]);
+            x0 = this.chartProps.xScale.invert(d3.mouse(node)[0]);
         }
         const i = this.bisectDate(this.line1DataHistory.timePriceArray, x0, 1);
         // console.log('i: ', i);
@@ -502,24 +508,32 @@ export class GraphLineComponent {
         // console.log('d0: ', d0);
 
         const aLength = this.line1DataHistory.timePriceArray.length;
+        const lastIndex = aLength - 1;
         let d1: ITimePrice;
-        if (i >= this.line1DataHistory.timePriceArray.length) {
-            d1 = this.line1DataHistory.timePriceArray[aLength - 1];
+        if (i >= aLength) {
+            d1 = this.line1DataHistory.timePriceArray[lastIndex];
         } else {
             d1 = this.line1DataHistory.timePriceArray[i];
         }
         // console.log('d1: ', d1);
+        if ( x0.getTime() - (d0.timestamp as Date).getTime() > (d1.timestamp as Date).getTime() - x0.getTime()) {
+          this.d = d1;
+          if (i >= lastIndex) {
+            this.currentPointIndex = lastIndex;
+          } else {
+            this.currentPointIndex = i;
+          }
+        } else {
+          this.d = d0;
+          this.currentPointIndex = i - 1;
+        }
 
-        this.d =
-            x0.getTime() - (d0.timestamp as Date).getTime() >
-            (d1.timestamp as Date).getTime() - x0.getTime()
-            ? d1
-            : d0;
         this.moveToolTip();
 
     }
 
     public moveToolTip() {
+        const lastindexpoint = this.line1DataHistory.timePriceArray.length - 1;
         if (this.newxScale) {
             this.focus
             .attr(
@@ -528,7 +542,10 @@ export class GraphLineComponent {
                     new Date(this.d.timestamp),
                 )},${this.newyScale(this.d.price)})`);
 
-            this.distanciax = this.newxScale(new Date(this.d.timestamp));
+            this.distanciaLeft = this.newxScale(new Date(this.d.timestamp));
+            this.distanciaRight =
+            this.newxScale(new Date(this.line1DataHistory.timePriceArray[lastindexpoint].timestamp))
+            - this.distanciaLeft;
             // console.log('distanciax: ', distanciax);
 
         } else {
@@ -539,18 +556,12 @@ export class GraphLineComponent {
                     new Date(this.d.timestamp),
                 )},${this.chartProps.yScale(this.d.price)})`);
 
-            this.distanciax = this.chartProps.xScale(new Date(this.d.timestamp));
-            // console.log('distanciax: ', distanciax);
+            this.distanciaLeft = this.chartProps.xScale(new Date(this.d.timestamp));
+            this.distanciaRight =
+            this.chartProps.xScale(new Date(this.line1DataHistory.timePriceArray[lastindexpoint].timestamp))
+            - this.distanciaLeft;
 
         }
-
-        /* if (this.d3eventtransform) {
-          this.focus.attr(
-            'transform',
-            this.d3eventtransform
-          )
-        } */
-        // console.log(this.chartProps.xScale(new Date(d.date)));
 
         this.textToolTip
         .text(this.getDataPoint.bind(this));
@@ -559,40 +570,40 @@ export class GraphLineComponent {
         this.focus.selectAll('rect').remove();
 
         // si no funciona meter en un observable
-        this.calculateBbox();
-        // console.log('this.bbox en moveTooltip: ', this.bbox);
+        this.calculateBbox()
+        .subscribe((bbox) => {
+          const rect = this.focus
+              .append('rect')
+              .attr('x', bbox.x)
+              .attr('y', bbox.y)
+              .attr('width', bbox.width)
+              .attr('height', bbox.height)
+              .style('fill', 'white')
+              .style('fill-opacity', '.9')
+              .style('stroke', '#666')
+              .style('stroke-width', '0.5px');
 
-        const rect = this.focus
-            .append('rect')
-            .attr('x', this.bbox.x)
-            .attr('y', this.bbox.y)
-            .attr('width', this.bbox.width)
-            .attr('height', this.bbox.height)
-            .style('fill', 'white')
-            .style('fill-opacity', '.9')
-            .style('stroke', '#666')
-            .style('stroke-width', '0.5px');
+          this.txtNode = this.textToolTip.node() as SVGTextElement;
 
-        this.txtNode = this.textToolTip.node() as SVGTextElement;
+          this.focus.node().insertBefore(this.txtNode, null);
 
-        this.focus.node().insertBefore(this.txtNode, null);
+          let newy2 = 0;
 
-        let newy2 = 0;
+          if (this.newyScale) {
+              newy2 = this.newyScale(this.d.price);
+          } else {
+              newy2 = this.chartProps.yScale(this.d.price);
 
-        if (this.newyScale) {
-            newy2 = this.newyScale(this.d.price);
-        } else {
-            newy2 = this.chartProps.yScale(this.d.price);
+          }
 
-        }
+          // escalo la posicion y2 de la línea según la nueva escala si se ha hecho zoom
+          this.focus
+              .select('.x-hover-line')
+              .attr('y2', this.height - newy2);
 
-        // escalo la posicion y2 de la línea según la nueva escala si se ha hecho zoom
-        this.focus
-            .select('.x-hover-line')
-            .attr('y2', this.height - newy2);
-
-        // no funciona la linea horizontal
-        this.focus.select('.y-hover-line').attr('x2', - this.distanciax);
+          // no funciona la linea horizontal
+          this.focus.select('.y-hover-line').attr('x2', - this.distanciaLeft);
+        });
     }
     public recalculateWidths(changeWidth: string) {
         const widthToNumber = parseInt(changeWidth.slice(12, 16), 10);
@@ -624,20 +635,34 @@ export class GraphLineComponent {
         this.moveToolTip();
     }
 
-    public calculateBbox(): DOMRect {
+    public calculateBbox(): Observable<DOMRect> {
+        let bbox: DOMRect;
 
         this.txtNode = this.textToolTip.node() as SVGTextElement;
-        this.bbox = this.txtNode.getBBox();
+        bbox = (this.textToolTip.node() as SVGTextElement).getBBox();
 
-        if (this.bbox.width + 10 > this.distanciax) {
-            this.textToolTip
-            .attr('text-anchor', 'start');
-            this.bbox = this.txtNode.getBBox();
+        if (
+            this.distanciaLeft < bbox.width / 2
+            ) {
+                this.textToolTip.attr('text-anchor', 'start');
+        } else if (
+            this.distanciaLeft < bbox.width
+        ) {
+            this.textToolTip.attr('text-anchor', 'middle');
+        } else if (
+            this.distanciaRight > bbox.width
+        ) {
+            this.textToolTip.attr('text-anchor', 'middle');
+        } else if (
+            this.distanciaRight > bbox.width / 2
+        ) {
+            this.textToolTip.attr('text-anchor', 'end');
         } else {
-            this.textToolTip
-            .attr('text-anchor', 'end');
+            this.textToolTip.attr('text-anchor', 'end');
         }
+
+        bbox = (this.textToolTip.node() as SVGTextElement).getBBox();
         // console.log('this.bbox en calculateBbox: ', this.bbox);
-        return this.bbox;
+        return of(bbox);
     }
 }
