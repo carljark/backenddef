@@ -16,7 +16,7 @@ const config: IConfig = {
 if (mode === 'development') {
   config.timeForUpdates = 6000;
   config.tooltipTimeFormat = 'DD/MM HH[h]mm[m]ss[s]';
-  config.urlServer = 'http://192.168.1.3:8000';
+  config.urlServer = 'https://carlosalbertogodoy.ddns.net';
   config.minutesForHistory = 10;
 } else if (mode === 'production') {
   config.timeForUpdates = 6000;
