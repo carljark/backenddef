@@ -148,7 +148,8 @@ svg {
 }
   
 .hover-line {
-  stroke: #6F257F;
+
+  stroke: burlywood;
   // stroke: burlywood;
   stroke-width: 1px;
   stroke-dasharray: 3,3;
@@ -160,12 +161,6 @@ svg {
   stroke-width: 5px;
 }
 
-.hover-line.y-hover-line {
-  stroke: burlywood;
-}
-.hover-line.x-hover-line {
-  stroke-dasharray: 2,2;
-}
 
 .graphic_title_text {
   font-family: Dosis-regular,sans-serif;
@@ -226,5 +221,14 @@ $break-lite: 320px;
   }
   .axis {
     font: 20px sans-serif;
+  }
+  .hover-line {
+    // stroke: burlywood;
+    stroke-width: 3px;
+    stroke-dasharray: 10,5;
+  }
+  .axis path,
+  .axis line {
+    stroke-width: 4px;
   }
 }
