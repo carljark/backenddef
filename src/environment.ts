@@ -10,6 +10,7 @@ interface IDatabaseConfig {
 interface IConfig {
     databaseConfig: IDatabaseConfig;
     urlServer: string;
+    urlServerRedirect: string;
     emailto: string;
     timeAmount: number;
 }
@@ -30,6 +31,7 @@ const configurations: IConfigModes = {
         emailto: 'godoy@archrog.localdomain',
         timeAmount: 10,
         urlServer: 'localhost',
+        urlServerRedirect: 'https://carlosalbertogodoy.ddns.net',
     },
     production: {
         databaseConfig: {
@@ -41,6 +43,7 @@ const configurations: IConfigModes = {
         emailto: 'dev-test@team.bit2me.com',
         timeAmount: 100,
         urlServer: 'localhost',
+        urlServerRedirect: 'https://carlosalbertogodoy.ddns.net',
     },
 };
 

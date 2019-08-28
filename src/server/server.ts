@@ -20,6 +20,12 @@ import getAndSaveDataLoop from '../coinmarketdata/getandsavedataloop';
 import {interval} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
 
+import https from 'https';
+
+import {credentials} from './credentials';
+
+const mode = process.env.NODE_ENV;
+
 const dataCoinsResponse$ = getData$();
 
 const sendMail = (data: IResp) => {
@@ -45,13 +51,24 @@ export default class Server {
 
     public app: express.Application;
 
-    public httpserver: http.Server;
+    public server: http.Server | https.Server;
 
     constructor(private port: number) {
         this.app = express();
+        if (mode === 'development') {
+            console.log('http');
+            this.server = http.createServer(this.app);
+            this.ioserver = socketio(this.server);
+        } else if (mode === 'production') {
+            console.log('https');
+            this.server = https.createServer(credentials , this.app);
+            this.ioserver = socketio(this.server);
+        } else {
+            // this.server = http.createServer(this.app);
+            this.server = https.createServer(credentials , this.app);
+            this.ioserver = socketio(this.server);
+        }
         // inicio el socket
-        this.httpserver = http.createServer(this.app);
-        this.ioserver = socketio(this.httpserver);
 
         // sustituto las funciones de dentro de on connection
         // por emitToAll
@@ -94,8 +111,9 @@ export default class Server {
     }
 
     public start(callback?: () => void) {
-        this.httpserver.listen(this.port, callback);
+        this.server.listen(this.port, callback);
         getAndSaveDataLoop();
+
     }
 
     public emitToAll() {
