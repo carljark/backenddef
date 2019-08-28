@@ -11,6 +11,7 @@ interface IConfig {
     databaseConfig: IDatabaseConfig;
     urlServer: string;
     emailto: string;
+    timeAmount: number;
 }
 
 interface IConfigModes {
@@ -27,6 +28,7 @@ const configurations: IConfigModes = {
             user: 'user',
         },
         emailto: 'godoy@archrog.localdomain',
+        timeAmount: 10,
         urlServer: 'localhost',
     },
     production: {
@@ -37,6 +39,7 @@ const configurations: IConfigModes = {
             user: 'user',
         },
         emailto: 'dev-test@team.bit2me.com',
+        timeAmount: 100,
         urlServer: 'localhost',
     },
 };

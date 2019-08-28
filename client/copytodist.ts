@@ -11,4 +11,5 @@ const copyToDist = (file: string) => {
 };
 
 copyToDist('index.html');
+copyToDist('samplecurrencylisting20190819_114550.json');
 // copyToDist('styles.css');

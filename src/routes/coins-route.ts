@@ -9,13 +9,13 @@ import {
 } from 'express';
 import {  map, switchMap, tap } from 'rxjs/operators';
 
-import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
-
 import getData$ from '../coinmarketdata/getdata.function';
 
-const dataResponse$ = getData$();
-
 import CoinsInterf from '../modelos/coins-responses';
+
+import config from '../environment';
+
+const dataResponse$ = getData$();
 
 class CoinsRoute {
   public router: Router;
@@ -101,7 +101,7 @@ class CoinsRoute {
       .subscribe((index) => {
         console.log('name finded: ', index);
         if (index !== -1) {
-          CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), 10, req.params.name)
+          CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), config.timeAmount, req.params.name)
           .subscribe((history) => {
             console.log('icoinhistory: ', history);
             res.send(history);

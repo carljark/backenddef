@@ -13,7 +13,6 @@ export class GetCurrenciesService {
               })
               .then((myjson: ISimpleCoin[]) => {
                 if (myjson.length) {
-                    console.log('myjson: ', myjson);
                     ob.next(myjson);
                     ob.complete();
                 }

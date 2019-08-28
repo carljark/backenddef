@@ -6,8 +6,6 @@ import ISimpleCoin from './simplecoin.interface';
 
 import config from './environment';
 
-import updateCurrencies from './update-currencies.function';
-
 const iosocket = ioconnect(config.urlServer);
 
 export class SocketioService {
@@ -19,7 +17,6 @@ export class SocketioService {
             return fromEvent<ISimpleCoin[]>(iosocket, 'coin update')
             .pipe(
                   tap((em) => {
-                        console.log('em', em);
                         this.updateCurrencies(em);
                   }),
                   mapTo(true),
