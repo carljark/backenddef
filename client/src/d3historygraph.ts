@@ -32,7 +32,7 @@ export class GraphLineComponent {
     public lastIndex: number = 0;
     public currentPointIndex: number = 0;
     public formatEverd = d3.timeFormat('%d/%m %H:%M');
-    public txtNode: SVGTextElement;
+    public bbox$: Observable<DOMRect>;
     public bbox: DOMRect;
     public distanciaLeft: number;
     public distanciaRight: number;
@@ -44,8 +44,8 @@ export class GraphLineComponent {
     public d3eventtransform: any;
     // public newyScale: d3.AxisScale<number | { valueOf(): number; }>;
     // public newxScale: d3.AxisScale<number | { valueOf(): number; }>;
-    public newyScale: any; // asignar en el contructor o equivalente
-    public newxScale: any;
+    public newyScale: d3.ScaleLinear<number, number>; // asignar en el contructor o equivalente
+    public newxScale: d3.ScaleTime<number, number>;
     public bisectDate = d3.bisector((d: ITimePrice) => d.timestamp).right;
     public bisectValue = d3.bisector((d: ITimePrice) => d.price).right;
     public svgWidth = 800;
@@ -55,6 +55,7 @@ export class GraphLineComponent {
     public height = this.svgHeight - this.margin.top - this.margin.bottom;
     public originalLine: d3.Line<ITimePrice>;
     public scaledLine: d3.Line<ITimePrice>;
+    public focuscircle: d3.Selection<SVGCircleElement, {}, null, undefined>;
     public originalCircle = {
     cx: -150,
     cy: -15,
@@ -70,6 +71,7 @@ export class GraphLineComponent {
     public titleSvg: d3.Selection<SVGGElement, {}, null, undefined>;
     public focus$ = new Observable<d3.Selection<SVGGElement, {}, null, undefined>>();
     public focus: d3.Selection<SVGGElement, {}, null, undefined>;
+    public textToolTip$: Observable<d3.Selection<SVGTextElement, {}, null, undefined>>;
     public textToolTip: d3.Selection<SVGTextElement, {}, null, undefined>;
     public zoom: d3.ZoomBehavior<Element, {}>;
     public xAxis: d3.Axis<number | { valueOf(): number }>;
@@ -80,36 +82,68 @@ export class GraphLineComponent {
     public linesDataUpdated$: Observable<ISimpleCoin[]>;
     public mediaString = '(min-width: 321px)';
     public linesDataUpdatedSubs: Subscription;
+    public tttSubs: Subscription;
     public changeWidthSubs: Subscription;
     constructor(
         public lineas: ICoinHistory[],
         private socketioServ: SocketioService,
     ) {
-        this.ngOnInit();
-
-        this.changeWidthSubs =
-        changeWidth$
+        this.focus$ = this.getTitles()
         .pipe(
-            switchMap((mediaString) => this.recalculateWidths(mediaString)),
-        )
-        .subscribe();
+            mergeMap(() => this.getLine1()),
+            switchMap(() => this.defineChart()),
+            switchMap(() => from(this.lineas)),
+            mergeMap((lin) => this.drawLine$(lin)),
+            delay(1000),
+            concatMap(() => this.initFocus$()),
+        );
 
-        this.linesDataUpdated$ = this.socketioServ.getUpdatedCurrencies$();
-
-        this.linesDataUpdatedSubs = this.linesDataUpdated$
+        this.textToolTip$ = this.focus$
         .pipe(
-            map((currenciesDatas) => {
-                const idx = currenciesDatas.findIndex((currency) => currency.name === this.titleGraph);
-                return currenciesDatas[idx];
-            }),
-            switchMap((currData) => this.updateLinePoints(currData)),
-            switchMap(() => this.updateAxis()),
-            switchMap(() => this.updateLine()),
-            switchMap(() => this.recalculateWidths()),
-            switchMap(() => this.checkCurrentPointIndex()),
+            concatMap((focus) => this.getTextToolTip(focus)),
+        );
+
+        this.tttSubs = this.textToolTip$
+        .pipe(
+            concatMap(() => this.addEventsArea()),
+            switchMap(() => this.putToolTipInLastPoint()),
+            catchError(() => of('error')),
         )
-        .subscribe();
-        // tengo que quitar las subscripciones cuando se elimita el svg
+        .subscribe(() => {
+          this.addTitleGraph();
+
+          this.changeWidthSubs =
+          changeWidth$
+          .pipe(
+              switchMap((mediaString) => this.recalculateWidths(mediaString)),
+          )
+          .subscribe();
+
+          this.linesDataUpdated$ = this.socketioServ.getUpdatedCurrencies$();
+
+          this.linesDataUpdatedSubs = this.linesDataUpdated$
+          .pipe(
+              map((currenciesDatas) => {
+                  const idx = currenciesDatas.findIndex((currency) => currency.name === this.titleGraph);
+                  return currenciesDatas[idx];
+              }),
+              switchMap((currData) => this.updateLinePoints(currData)),
+              switchMap(() => this.updateAxis()),
+              switchMap(() => this.updateLine()),
+              switchMap(() => this.recalculateWidths()),
+              switchMap(() => this.putToolTipInLastPoint()),
+              switchMap(() => this.checkCurrentPointIndex()),
+          )
+          .subscribe();
+          // tengo que quitar las subscripciones cuando se elimita el svg
+          });
+
+        /* this.bbox$ = this.focus$
+        .pipe(
+            switchMap((focus) => this.getTextToolTip(focus)),
+            switchMap((tt) => this.getBbox$(tt)),
+        ); */
+
     }
     public updateLinePoints(currData: ISimpleCoin): Observable<ICoinHistory> {
         return new Observable<ICoinHistory>((ob) => {
@@ -129,10 +163,8 @@ export class GraphLineComponent {
             // si shift no se ejecuta la líneas no de redibuja
 
             this.line1DataHistory = this.lineas[0];
-
-            // this.updateAxis().subscribe();
-            // this.recalculateWidths();
             ob.next(this.line1DataHistory);
+            ob.complete();
         });
     }
     public getTimeSize(start: Date, end: Date): number {
@@ -174,7 +206,9 @@ export class GraphLineComponent {
         });
     }
     public onclickremove() {
+        this.changeWidthSubs.unsubscribe();
         this.linesDataUpdatedSubs.unsubscribe();
+        // this.tttSubs.unsubscribe();
         document.getElementById(`${this.titleGraph}data`).className = 'fila';
         // d3.select(`#${this.titleGraph}data`).attr('class', 'fila');
         GraphLineComponent.removeSvg$(this.titleGraph);
@@ -203,7 +237,7 @@ export class GraphLineComponent {
         });
     }
 
-    public putToolTipInLastPoint(): Observable<boolean> {
+    public putToolTipInLastPoint() {
       return iif(
               () => {
                   this.currentPointIndex--;
@@ -213,55 +247,21 @@ export class GraphLineComponent {
               // if not supplied defaults to EMPTY
         )
         .pipe(
-            tap(() => {
+            switchMap(() => {
                 const lastIndex = this.line1DataHistory.timePriceArray.length - 1;
                 this.d = this.line1DataHistory.timePriceArray[lastIndex];
                 this.currentPointIndex = lastIndex;
-                this.moveToolTip().subscribe();
+                return this.moveToolTip();
             }),
-            mapTo(true),
         );
-      /* .pipe(
-          mergeMap((ok) =>
-          iif(
-            this.currentPointIndex--;
-            (this.currentPointIndex < 0) {
-                const lastIndex = this.line1DataHistory.timePriceArray.length - 1;
-                this.d = this.line1DataHistory.timePriceArray[lastIndex];
-                this.currentPointIndex = lastIndex;
-                this.moveToolTip().subscribe();
-        }),
-      ); */
     }
-    public checkCurrentPointIndex(): Observable<boolean> {
+    public checkCurrentPointIndex() {
         return this.focus$
         .pipe(
             switchMap(() => this.putToolTipInLastPoint()),
         );
     }
 
-    public ngOnInit() {
-
-        /* this.removeSvg$()
-        .pipe(switchMap((ok) => this.getTitles())
-        ) */
-        this.getTitles()
-        .pipe(
-            mergeMap(() => this.getLine1()),
-            switchMap(() => this.defineChart()),
-            switchMap(() => from(this.lineas)),
-            mergeMap((lin) => this.drawLine$(lin)),
-            delay(1000),
-            concatMap(() => this.initFocus$()),
-            concatMap(() => this.addToolTips$()),
-            concatMap(() => this.addEventsArea()),
-            switchMap(() => this.putToolTipInLastPoint()),
-            catchError(() => of('error')),
-        )
-        .subscribe(() => {
-        this.addTitleGraph();
-        });
-    }
     public initScales() {
         return new Observable<boolean>((ob) => {
             this.chartProps.xScale = d3
@@ -454,21 +454,25 @@ export class GraphLineComponent {
         });
     }
     public reescaleGraphic() {
+        return new Observable<boolean>((ob) => {
+            this.newxScale = this.d3eventtransform.rescaleX(this.chartProps.xScale);
+            this.newyScale = this.d3eventtransform.rescaleY(this.chartProps.yScale);
+            this.gX.call(this.xAxis.scale(this.newxScale));
+            this.gY.call(this.yAxis.scale(this.newyScale));
+            this.lineSvg.call(this.xAxis.scale(this.newxScale));
+            this.lineSvg.call(this.yAxis.scale(this.newyScale));
+
+            this.changeLine();
+
+        })
+        .pipe(
+            switchMap(() => this.moveToolTip),
+        );
         // update axes
-        this.newxScale = this.d3eventtransform.rescaleX(this.chartProps.xScale);
-        this.newyScale = this.d3eventtransform.rescaleY(this.chartProps.yScale);
-        this.gX.call(this.xAxis.scale(this.newxScale));
-        this.gY.call(this.yAxis.scale(this.newyScale));
-        this.lineSvg.call(this.xAxis.scale(this.newxScale));
-        this.lineSvg.call(this.yAxis.scale(this.newyScale));
-
-        this.changeLine();
-
-        this.moveToolTip().subscribe();
     }
     public zoomFunction() {
         this.d3eventtransform = d3.event.transform;
-        this.reescaleGraphic();
+        this.reescaleGraphic().subscribe();
     }
 
     public changeLine() {
@@ -495,47 +499,64 @@ export class GraphLineComponent {
     }
 
     public initFocus$() {
-        this.focus$ = of(this.focus = this.innerSpace
+        this.focus$ = of(
+        this.focus = this.innerSpace
         .append('g')
-        .attr('class', 'this.focus')
+        .attr('class', 'focus')
         // .style('display', 'none');
         .style('display', 'null'));
+
+        this.focus
+        .append('line')
+        .attr('class', 'x-hover-line hover-line')
+        .attr('y1', 0)
+        .attr('y2', this.height)
+        .attr('pointer-events', 'none');
+
+        this.focus
+        .append('line')
+        .attr('class', 'y-hover-line hover-line')
+        .attr('x1', 0)
+        .attr('x2', this.width)
+        .attr('pointer-events', 'none');
+
+        this.focuscircle = this.focus
+        .append('circle')
+        .attr('id', 'focuscircle')
+        .attr('r', 5)
+        .attr('pointer-events', 'none');
+
+        this.animateCircle(this.focuscircle.node());
+
         return this.focus$;
     }
+    public animateCircle(el: SVGCircleElement) {
+        let n1 = 20;
+        let ch1 = 1;
+        let elT = setInterval(elTF, 100);
+        function elTF() {
+            el.setAttribute('r', (n1 / 10).toString());
+            if (n1 === 20) {
+                ch1 = 1;
+            } else if (n1 === 50) {
+                ch1 = -1;
+            }
+            n1 += ch1;
+        }
+    }
 
-    public addToolTips$(): Observable<boolean> {
-        return this.focus$
-        .pipe(
-            tap((focus) => {
-                focus
-                .append('line')
-                .attr('class', 'x-hover-line hover-line')
-                .attr('y1', 0)
-                .attr('y2', this.height)
-                .attr('pointer-events', 'none');
-
-                focus
-                .append('line')
-                .attr('class', 'y-hover-line hover-line')
-                .attr('x1', 0)
-                .attr('x2', this.width)
-                .attr('pointer-events', 'none');
-
-                focus
-                .append('circle')
-                .attr('r', 2)
-                .attr('pointer-events', 'none');
-
-                this.textToolTip = focus
-                .append('text')
+    public getTextToolTip(focus: d3.Selection<SVGGElement, {}, null, undefined>) {
+        const tt = focus
+        .append('text')
                 .attr('id', 'textToolTip')
                 .attr('class', 'text_tooltip')
                 .attr('text-anchor', 'end')
                 .attr('y', -20)
                 .attr('dy', '.31em');
-            }),
-            mapTo(true),
-        );
+
+        this.textToolTip = tt;
+
+        return of(tt);
 
     }
 
@@ -623,36 +644,11 @@ export class GraphLineComponent {
 
     }
 
-    public moveToolTip(): Observable<boolean> {
+    public moveToolTip() {
         return this.focus$
         .pipe(
             tap((focus) => {
-                const lastindexpoint = this.line1DataHistory.timePriceArray.length - 1;
-                if (this.newxScale) {
-                    focus
-                    .attr(
-                        'transform',
-                        `translate(${this.newxScale(
-                            new Date(this.d.timestamp),
-                        )},${this.newyScale(this.d.price)})`);
-
-                    this.distanciaLeft = this.newxScale(new Date(this.d.timestamp));
-                    this.distanciaRight =
-                    this.newxScale(new Date(this.line1DataHistory.timePriceArray[lastindexpoint].timestamp))
-                    - this.distanciaLeft;
-                } else {
-                        focus
-                        .attr(
-                            'transform',
-                            `translate(${this.chartProps.xScale(
-                                new Date(this.d.timestamp),
-                            )},${this.chartProps.yScale(this.d.price)})`);
-                        this.distanciaLeft = this.chartProps.xScale(new Date(this.d.timestamp));
-                        this.distanciaRight =
-                        this.chartProps.xScale(new Date(this.line1DataHistory.timePriceArray[lastindexpoint].timestamp))
-                        - this.distanciaLeft;
-
-                }
+                this.moveFocus(focus);
 
                 this.textToolTip
                 .text(this.getDataPoint.bind(this));
@@ -661,60 +657,76 @@ export class GraphLineComponent {
                 focus.selectAll('rect').remove();
 
                 // si no funciona meter en un observable
-                this.calculateBbox()
+                this.getBbox$()
                 .subscribe((bbox) => {
-                const rect = focus
-                    .append('rect')
-                    .attr('x', bbox.x)
-                    .attr('y', bbox.y)
-                    .attr('width', bbox.width)
-                    .attr('height', bbox.height)
-                    .style('fill', 'white')
-                    .style('fill-opacity', '.9')
-                    .style('stroke', '#666')
-                    .style('stroke-width', '0.5px');
+                    this.drawFocusRect(focus, bbox);
 
-                this.txtNode = this.textToolTip.node() as SVGTextElement;
-
-                focus.node().insertBefore(this.txtNode, null);
-
-                let newy2 = 0;
-
-                if (this.newyScale) {
-                    newy2 = this.newyScale(this.d.price);
-                } else {
-                    newy2 = this.chartProps.yScale(this.d.price);
-
-                }
-
-                // escalo la posicion y2 de la línea según la nueva escala si se ha hecho zoom
-                focus
-                    .select('.x-hover-line')
-                    .attr('y2', this.height - newy2);
-
-                // no funciona la linea horizontal
-                focus.select('.y-hover-line').attr('x2', - this.distanciaLeft);
+                    this.scaleFocusLines(focus);
                 });
             }),
-            mapTo(true),
         );
 
     }
-    public recalculateWidths(mediaString?: string): Observable<boolean> {
-        return new Observable<boolean>((ob) => {
+    public drawFocusRect(focus: d3.Selection<SVGGElement, {}, null, undefined>, bbox: DOMRect) {
+        const rect = focus
+        .append('rect')
+        .attr('x', bbox.x)
+        .attr('y', bbox.y)
+        .attr('width', bbox.width)
+        .attr('height', bbox.height)
+        .style('fill', 'white')
+        .style('fill-opacity', '.9')
+        .style('stroke', '#666')
+        .style('stroke-width', '0.5px');
 
+        const txtNode = this.textToolTip.node() as SVGTextElement;
+
+        focus.node().insertBefore(txtNode, null);
+    }
+    public moveFocus(focus: d3.Selection<SVGGElement, {}, null, undefined>) {
+        if (this.newxScale) {
+            this.moveFocusFactory(focus, this.newxScale, this.newyScale);
+        } else {
+            this.moveFocusFactory(focus, this.chartProps.xScale, this.chartProps.yScale);
+        }
+    }
+    public moveFocusFactory(
+        focus: d3.Selection<SVGGElement, {}, null, undefined>,
+        xScale: d3.ScaleTime<number, number>,
+        yScale: d3.ScaleLinear<number, number>,
+        ) {
+        const lastindexpoint = this.line1DataHistory.timePriceArray.length - 1;
+        focus
+        .attr(
+            'transform',
+            `translate(${xScale(new Date(this.d.timestamp))},${yScale(this.d.price)})`);
+        this.distanciaLeft = xScale(new Date(this.d.timestamp));
+        this.distanciaRight =
+        this.chartProps.xScale(new Date(this.line1DataHistory.timePriceArray[lastindexpoint].timestamp))
+        - this.distanciaLeft;
+    }
+    public scaleFocusLines(focus: d3.Selection<SVGGElement, {}, null, undefined>) {
+        let newy2 = 0;
+
+        if (this.newyScale) {
+            newy2 = this.newyScale(this.d.price);
+        } else {
+            newy2 = this.chartProps.yScale(this.d.price);
+
+        }
+        focus
+        .select('.x-hover-line')
+        .attr('y2', this.height - newy2);
+        focus.select('.y-hover-line').attr('x2', - this.distanciaLeft);
+    }
+    public recalculateWidths(mediaString?: string) {
+        return new Observable<boolean>((ob) => {
             if (mediaString) {
                 this.mediaString = mediaString;
             }
             const widthToNumber = parseInt(this.mediaString.slice(12, 16), 10);
             const numberOfTicks = widthToNumber / 100;
             if (this.mediaString === '(max-width: 320px)') {
-              // this.gX.remove()
-              // this.gX = this.innerSpace
-              //     .append('g')
-              //     .attr('class', 'axis axis--x')
-              //     .attr('transform', 'translate(0,' + this.height + ')')
-              //     .call(this.xAxis.ticks(2).tickFormat(this.formatEverd));
               this.gX
               .call(this.xAxis.ticks(Math.max(numberOfTicks, 2)).tickFormat(this.formatEverd));
               this.gY
@@ -730,39 +742,48 @@ export class GraphLineComponent {
               this.gY
               .call(this.yAxis.ticks(5));
             }
-            this.moveToolTip().subscribe();
             ob.next(true);
-        });
+        })
+        .pipe(
+         switchMap(() => this.moveToolTip()),
+        );
     }
 
-    public calculateBbox(): Observable<DOMRect> {
+    public getBbox$(textToolTip?: d3.Selection<SVGTextElement, {}, null, undefined>): Observable<DOMRect> {
         let bbox: DOMRect;
+        let ttt: d3.Selection<SVGTextElement, {}, null, undefined>;
 
-        this.txtNode = this.textToolTip.node() as SVGTextElement;
-        bbox = (this.textToolTip.node() as SVGTextElement).getBBox();
+        if (textToolTip) {
+            ttt = textToolTip;
+        } else {
+            ttt = this.textToolTip;
+        }
 
-        if (
-            this.distanciaLeft < bbox.width / 2
-            ) {
-                this.textToolTip.attr('text-anchor', 'start');
+        bbox = this.updateBbox(ttt);
+
+        // console.log('this.bbox en calculateBbox: ', this.bbox);
+        return of(bbox);
+    }
+    public updateBbox(textToolTip: d3.Selection<SVGTextElement, {}, null, undefined>) {
+        const bbox = textToolTip.node().getBBox();
+        if (this.distanciaLeft < bbox.width / 2) {
+                textToolTip.attr('text-anchor', 'start');
         } else if (
             this.distanciaLeft < bbox.width
         ) {
-            this.textToolTip.attr('text-anchor', 'middle');
+            textToolTip.attr('text-anchor', 'middle');
         } else if (
             this.distanciaRight > bbox.width
         ) {
-            this.textToolTip.attr('text-anchor', 'middle');
+            textToolTip.attr('text-anchor', 'middle');
         } else if (
             this.distanciaRight > bbox.width / 2
         ) {
-            this.textToolTip.attr('text-anchor', 'end');
+            textToolTip.attr('text-anchor', 'end');
         } else {
-            this.textToolTip.attr('text-anchor', 'end');
+            textToolTip.attr('text-anchor', 'end');
         }
+        return textToolTip.node().getBBox();
 
-        bbox = (this.textToolTip.node() as SVGTextElement).getBBox();
-        // console.log('this.bbox en calculateBbox: ', this.bbox);
-        return of(bbox);
     }
 }

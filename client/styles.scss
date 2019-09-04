@@ -118,7 +118,7 @@ svg {
 }
 
 .linegraph {
-  stroke-width: 1;
+  stroke-width: 1px;
   fill: none;
   vector-effect: non-scaling-stroke;
 }
@@ -141,18 +141,61 @@ svg {
   fill: none;
   pointer-events: all;
 }
+@keyframes growcircle {
+  from {
+    stroke-width: 2px;
+    // r: 3;
+  }
+  to {
+    stroke-width: 3px;
+    // r: 9;
+  }
+}
+@-moz-keyframes growcircle {
+  from {
+    stroke-width: 2px;
+    // -moz-r: 3;
+  }
+  to {
+    stroke-width: 3px;
+    // -moz-r: 9;
+  }
+}
+@-webkit-keyframes growcircle {
+  from {
+    stroke-width: 2px;
+    // r: 3;
+  }
+  to {
+    stroke-width: 3px;
+    // r: 9;
+  }
+}
 .focus circle {
-  fill: #F1F3F3;
-  stroke: #6F257F;
-  stroke-width: 5px;
+  // fill: #F1F3F3;
+  fill: none;
+  stroke: darkcyan;
+  stroke-width: 3px;
+  -webkit-animation-name: growcircle; /* Safari 4.0 - 8.0 */
+  -webkit-animation-duration: 1s; /* Safari 4.0 - 8.0 */
+  -webkit-animation-direction: alternate; /* Safari 4.0 - 8.0 */
+  -webkit-animation-count: infinite;
+  -moz-animation-name: growcircle; /* Safari 4.0 - 8.0 */
+  -moz-animation-duration: 1s; /* Safari 4.0 - 8.0 */
+  -moz-animation-direction: alternate; /* Safari 4.0 - 8.0 */
+  -moz-animation-count: infinite;
+  animation-name: growcircle;
+  animation-duration: 1s;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
 }
   
 .hover-line {
-
+  fill: none;
   stroke: burlywood;
   // stroke: burlywood;
-  stroke-width: 1px;
-  stroke-dasharray: 3,3;
+  stroke-width: 2px;
+  stroke-dasharray: 6,3;
 }
 
 .aspas {
