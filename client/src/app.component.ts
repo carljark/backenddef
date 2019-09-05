@@ -1,4 +1,4 @@
-import { fromEvent, Observable, of, Subscription } from 'rxjs';
+import { fromEvent, Observable, of } from 'rxjs';
 import { mapTo, switchMap, tap } from 'rxjs/operators';
 
 import ISimpleCoin from './simplecoin.interface';
