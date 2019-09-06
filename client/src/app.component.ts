@@ -22,17 +22,12 @@ export class AppComponent {
     public currencyNames: string[] = new Array<string>();
     public currencyNameArray = new Array<HTMLParagraphElement>();
     public currencyPriceArray = new Array<HTMLParagraphElement>();
-    // escribir los arrays en el servicio socketio.service y
-    // eliminarlos de los argumentos
     public divData = document.getElementById('data');
-
   constructor(
       private getCurrServ: GetCurrenciesService,
       private socketioServ: SocketioService,
       ) {
 
-    // creo los párrafos y las options para cada coin
-    // y les asigno clases para desactivar sus eventos de click
     this.getCurrServ.getLastCurrencies()
     .pipe(
         switchMap((lastCurrs) => {
@@ -41,18 +36,14 @@ export class AppComponent {
             return this.createParagraphs();
         }),
         switchMap(() => this.createTable()),
-        // crear un miembro de array de eltoDiv
-        // para poder acceder directamente al primero
-        // y ejecutar su click
+        // provamos la sustitución
+        switchMap(() => this.clickOnFirstCurrencyFile()),
+        switchMap(() => this.socketioServ.start()),
+        switchMap(() => this.socketioServ.getUpdatedCurrencies$()),
     )
-    .subscribe((ok) => {
-        this.clickOnFirstCurrencyFile();
-        this.socketioServ.start().subscribe();
-        this.socketioServ.getUpdatedCurrencies$()
-        .subscribe((c) => {
-          this.lastCurrs = c;
-          update(c, this.currencyNameArray, this.currencyPriceArray);
-        });
+    .subscribe((c) => {
+        this.lastCurrs = c;
+        update(c, this.currencyNameArray, this.currencyPriceArray);
     });
 
     this.clickEvent$ = fromEvent(this.divData, 'click');
@@ -61,7 +52,11 @@ export class AppComponent {
     .subscribe();
   }
   public clickOnFirstCurrencyFile() {
+    return new Observable<boolean>((ob) => {
       this.eltoDivs[0].click();
+      ob.next(true);
+      ob.complete();
+    });
   }
   public createParagraphs() {
       return of(this.lastCurrs)
@@ -86,30 +81,33 @@ export class AppComponent {
   public createTable(): Observable<boolean> {
       return of(this.lastCurrs)
       .pipe(
-          tap((lastCurr) => {
-              this.lastCurrs.forEach((coin, i) => {
+          tap((lastCurrs) => {
+              lastCurrs.forEach((coin, i) => {
                 this.currencyNames.push(coin.name);
                 const eltoDiv = document.createElement('div');
+                const graphDiv = document.createElement('div');
+                // debo crear una div hila para el gráfico
                 eltoDiv.className = 'fila';
                 const name = coin.name + 'data';
+                const nameGraph = coin.name + 'graph';
                 eltoDiv.id = name;
+                graphDiv.id = nameGraph;
+                graphDiv.className = 'graphembeed';
+                // graphDiv.textContent = nameGraph;
                 this.currencyNameArray[i].textContent = coin.name;
                 this.currencyPriceArray[i].textContent = coin.price
-                  .toLocaleString('es-ES', {
-                    currency: 'EUR',
-                    style: 'currency',
-                  })
-                  .toString();
+                .toLocaleString('es-ES', {
+                  currency: 'EUR',
+                  style: 'currency',
+                })
+                .toString();
                 eltoDiv.appendChild(this.currencyNameArray[i]);
                 eltoDiv.appendChild(this.currencyPriceArray[i]);
 
                 this.divData.appendChild(eltoDiv);
+                this.divData.appendChild(graphDiv);
 
                 this.eltoDivs.push(eltoDiv);
-
-                /* if (i === 0) {
-                  eltoDiv.click();
-                } */
               });
           }),
           mapTo(true),
@@ -119,7 +117,6 @@ export class AppComponent {
   public getHistorial(clickEvent: MouseEvent): Observable<boolean> {
     return new Observable<boolean>((ob) => {
       const elementTarget: HTMLDivElement = clickEvent.target as HTMLDivElement;
-      // se trata de añadir la clase a la capa creada mas abajo como eltodiv
       import(/* webpackChunkName: "d3historygraph" */ './d3historygraph').then(
         (module) => {
 
@@ -127,14 +124,7 @@ export class AppComponent {
           const coinName = pChild.innerText;
           const indexCoin = this.currencyNames.findIndex((curr) => curr === coinName);
           if (elementTarget.className === 'fila coinselected') {
-            // debo conseguir el índice de la fila
             elementTarget.className = 'fila';
-            // debo conseguir eliminar las subscripciones
-            // accediendo a la instancia currespondiente del gráfico
-            // voy a guardar las instancias en una matriz de instancias
-            // averiguo el indice de la coinname para usarlo en
-            // el array del gráfico y unsubscribe en la instancia correspondiente
-            // esto está cojido con pinzas
             this.graficos[indexCoin].onclickremove();
             module.GraphLineComponent.removeSvg$(pChild.innerText);
           } else {

@@ -80,7 +80,9 @@ export class GraphLineComponent {
     public zoom: d3.ZoomBehavior<Element, {}>;
     public xAxis: d3.Axis<number | { valueOf(): number }>;
     public yAxis: d3.Axis<number | { valueOf(): number }>;
-    public lineGraphElement: HTMLElement;
+    public lineGraphElement: HTMLDivElement;
+    public divTableGraph: HTMLDivElement;
+    public objetiveGraph: HTMLDivElement;
     public line1DataHistory: ICoinHistory;
     public titleGraph = '';
     public linesDataUpdated$: Observable<ISimpleCoin[]>;
@@ -94,16 +96,25 @@ export class GraphLineComponent {
     private xTicks = 6;
     private yTicks = 6;
     private newYTTT = this.height / 2;
+    private anclado = false;
+    private anclar = false;
+    private desanclar = false;
 
     constructor(
         public lineas: ICoinHistory[],
         private socketioServ: SocketioService,
         ) {
+            /* this.titleGraph = this.lineas[0].name;
+            this.lineGraphElement = document.getElementById('linechart') as HTMLDivElement;
+            const nameGraphId = this.titleGraph + 'graph';
+            this.divTableGraph = document.getElementById(nameGraphId) as HTMLDivElement;
+            this.objetiveGraph = this.getObjetiveGraph(); */
+
             this.linesDataUpdated$ = this.socketioServ.getUpdatedCurrencies$();
 
             this.focus$ = this.getTitles()
             .pipe(
-                mergeMap(() => this.setWidths$()),
+                mergeMap(() => this.initVars()),
                 mergeMap(() => this.getLine1()),
                 switchMap(() => this.defineChart()),
                 switchMap(() => from(this.lineas)),
@@ -129,65 +140,42 @@ export class GraphLineComponent {
                 this.changeWidthSubs =
                 changeWidth$
                 .pipe(
-                    switchMap((mediaString) => this.setWidths$(mediaString)),
+                    switchMap((mediaString) => this.initVars(mediaString)),
                     switchMap((mediaString) => this.recalculateWidths$()),
                 )
-                .subscribe((mediastring) => {
-                    console.log('se subscribe en changeWidth: ', mediastring);
-                });
+                .subscribe();
 
                 this.linesDataUpdatedSubs = this.linesDataUpdated$
                 .pipe(
                     map((currenciesDatas) => {
                         const idx = currenciesDatas.findIndex((currency) => currency.name === this.titleGraph);
-                        console.log('linesDataUpdated$: ');
-
                         return currenciesDatas[idx];
                     }),
                     switchMap((currData) => this.updateLinePoints(currData)),
                     switchMap(() => this.updateAxis()),
                     switchMap(() => this.updateLine()),
-                    switchMap(() => this.setWidths$()),
+                    switchMap(() => this.initVars()),
                     switchMap(() => this.recalculateWidths$()),
                     switchMap(() => this.checkCurrentPointIndex()),
                 )
                 .subscribe();
-                // tengo que quitar las subscripciones cuando se elimita el svg
                 });
-
-                /* this.bbox$ = this.focus$
-                .pipe(
-                    switchMap((focus) => this.getTextToolTip(focus)),
-                    switchMap((tt) => this.getBbox$(tt)),
-                ); */
-
     }
+
     public updateLinePoints(currData: ISimpleCoin): Observable<ICoinHistory> {
         return new Observable<ICoinHistory>((ob) => {
+            // implementar en el servidor que se devuelvan los últimos
+            // 100 registros en vez de los últimos 100 minutos ( o 6 en development)
             this.lastIndex = this.lineas[0].timePriceArray.length - 1;
             const startTime = this.lineas[0].timePriceArray[0].timestamp;
             const endTime = this.lineas[0].timePriceArray[this.lastIndex].timestamp;
             const amountTime = this.getTimeSize(startTime, endTime);
-            console.log('aver si se ejecuta siempre');
-            /* if (amountTime === config.minutesForHistory - 1) {
-                this.lineas[0].timePriceArray.shift();
-                console.log('currData updated: ', currData);
-                // se cancela la emisión después de un tiempo
-
-                this.lineas[0].timePriceArray.push({
-                    price: currData.price,
-                    timestamp: new Date(),
-                });
-            } */
             this.lineas[0].timePriceArray.shift();
-            console.log('currData updated: ', currData);
-            // se cancela la emisión después de un tiempo
 
             this.lineas[0].timePriceArray.push({
                 price: currData.price,
                 timestamp: new Date(),
             });
-            // si shift no se ejecuta la líneas no de redibuja
 
             this.line1DataHistory = this.lineas[0];
             ob.next(this.line1DataHistory);
@@ -205,19 +193,22 @@ export class GraphLineComponent {
             .attr('d', this.originalLine.bind(this)(this.line1DataHistory.timePriceArray));
             if (this.d3eventtransform && this.d3eventtransform.k !== 1) {
                 this.lineSvg.attr('d', this.scaledLine.bind(this)(this.line1DataHistory.timePriceArray));
-                // this.reescaleGraphic();
                 this.svgViewport.call(this.zoom.bind(this));
             } else if (this.d3eventtransform && this.d3eventtransform.k === 1) {
                 this.lineSvg
                 .attr('d', this.originalLine.bind(this)(this.line1DataHistory.timePriceArray));
                 this.d3eventtransform = undefined;
                 this.newxScale = undefined;
+                // comprobar que se inicializan los ejes al salir del zoom
+                console.log('initAxes');
                 this.initAxes();
             }
             ob.next(true);
         });
     }
     public updateAxis(): Observable<boolean> {
+        // averiguar por qué no se actualizar los ejes cuando salgo del zoom
+        // es decir, cuando this.d3eventTransform.k = 1
         return new Observable<boolean>((ob) => {
             this.chartProps.xScale
             .domain(d3.extent(this.line1DataHistory.timePriceArray, (d) => new Date(d.timestamp).getTime()));
@@ -387,24 +378,36 @@ export class GraphLineComponent {
 
         });
     }
-    public initSvg() {
-        return new Observable<boolean>((ob) => {
-            this.lineGraphElement = document.getElementById('linechart');
-            this.svgViewport = d3
-            .select(this.lineGraphElement)
+    public getSvgViewPort$() {
+        return new Observable<d3.Selection<SVGGElement, {}, null, undefined>>((ob) => {
+            const svgViewport = d3
+            .select(this.objetiveGraph)
             .append('svg')
             .attr('id', this.titleGraph)
             .style('background', 'white')
             .attr('viewBox', `0 0 ${this.svgWidth} ${this.svgHeight}`);
-
-            this.innerSpace = this.svgViewport
-            .append('g')
-            .attr('class', 'inner_space')
-            .attr(
-            'transform',
-            'translate(' + this.margin.left + ',' + this.margin.top + ')',
-            );
-            ob.next(true);
+            // asignar anclado si se crea el svgvieport en la tabla
+            if (this.anclar === true) {
+                this.anclado = true;
+            }
+            ob.next(svgViewport);
+            ob.complete();
+        });
+    }
+    public initSvg() {
+        return new Observable<boolean>((ob) => {
+            this.getSvgViewPort$()
+            .subscribe((svgViewport) => {
+                this.svgViewport = svgViewport;
+                this.innerSpace = this.svgViewport
+                .append('g')
+                .attr('class', 'inner_space')
+                .attr(
+                'transform',
+                'translate(' + this.margin.left + ',' + this.margin.top + ')',
+                );
+                ob.next(true);
+            });
         });
     }
     public defineChart() {
@@ -490,7 +493,7 @@ export class GraphLineComponent {
             this.lineSvg.call(this.xAxis.scale(this.newxScale));
             this.lineSvg.call(this.yAxis.scale(this.newyScale));
 
-            this.changeLine();
+            this.scaleLine();
             ob.next(true);
             // this.moveToolTip().subscribe();
 
@@ -498,14 +501,13 @@ export class GraphLineComponent {
         .pipe(
             switchMap(() => this.moveToolTip()),
         );
-        // update axes
     }
     public zoomFunction() {
         this.d3eventtransform = d3.event.transform;
         this.reescaleGraphic().subscribe();
     }
 
-    public changeLine() {
+    public scaleLine() {
         this.lineSvg
         .attr('d', this.scaledLine.bind(this));
     }
@@ -752,6 +754,14 @@ export class GraphLineComponent {
     }
 
     public recalculateWidths$() {
+        if (this.anclar === true) {
+            this.moveGraphToTable();
+            this.anclar = false;
+        }
+        if (this.desanclar === true) {
+            this.desanclarGraph();
+            this.desanclar = false;
+        }
         return new Observable<string>((ob) => {
             this.gX
             .call(this.xAxis.ticks(this.xTicks).tickFormat(this.formatEverd));
@@ -805,56 +815,109 @@ export class GraphLineComponent {
 
     }
 
-    private setWidths$(mediaString?: string) {
+    private moveGraphToTable() {
+        if (this.anclado === false) {
+
+            // prueba... funciona
+            // divTableGraph.innerText = 'ostias';
+            this.lineGraphElement.removeChild(this.svgViewport.node());
+            this.divTableGraph.appendChild(this.svgViewport.node());
+            this.objetiveGraph = this.divTableGraph;
+            this.anclado = true;
+        }
+
+
+        
+    }
+    
+    private desanclarGraph() {
+        if (this.anclado === true) {
+            this.divTableGraph.removeChild(this.svgViewport.node());
+            this.lineGraphElement.appendChild(this.svgViewport.node());
+            this.objetiveGraph = this.lineGraphElement;
+            this.anclado = false;
+        }
+    }
+
+    private initVars(mediaString?: string) {
         if (mediaString) {
             this.mediaString = mediaString;
-            console.log('this.mediaString: ', this.mediaString);
         }
         return new Observable<string>((ob) => {
             // corregir para que quitar la ultima parte
             // mejor calcular los tics con el window.innerWidth
             // o con el mediastring
             const widthString = this.mediaString.match(/[0-9]+/);
-            console.log('widthString: ', widthString);
             let widthToNumber = 768;
             let numberOfTicks = 4;
-
+            
             if (widthString.length) {
                 widthToNumber = parseInt(widthString[0], 10);
                 numberOfTicks = widthToNumber / 100;
-
+                
             }
-
+            
             if (this.mediaString === '(min-width: 1025px)') {
                 this.xTicks = 6;
                 this.yTicks = 6;
                 this.yTextToolTip = -10;
+                this.desanclar = true;
+            } else if (this.mediaString === '(min-width: 769px)') {
+                this.xTicks = 6;
+                this.yTicks = 5;
+                this.yTextToolTip = -20;
+                // this.desanclar = true;
+                this.anclar = true;
             } else if (this.mediaString === '(min-width: 569px)') {
                 this.xTicks = 6;
                 this.yTicks = 5;
                 this.yTextToolTip = -20;
+                // this.desanclar = true;
+                this.anclar = true;
             } else if (this.mediaString === '(min-width: 321px)') {
                 this.xTicks = 2;
                 this.yTicks = 4;
                 this.yTextToolTip = -20;
+                // this.desanclar = true;
+                this.anclar = true;
             }
-
+            
             if (this.mediaString === '(max-width: 1024px)') {
                 this.xTicks = 8;
                 this.yTicks = 8;
                 this.yTextToolTip = -20;
+                this.anclar = true;
             } else if (this.mediaString === '(max-width: 568px)') {
                 this.xTicks = 2;
                 this.yTicks = 4;
                 this.yTextToolTip = -20;
+                this.anclar = true;
             } else if (this.mediaString === '(max-width: 320px)') {
                 this.xTicks = 2;
                 this.yTicks = 4;
                 this.yTextToolTip = 27;
+                this.anclar = true;
+
             }
+            console.log('this.mediastring: ', this.mediaString);
+
+            console.log('this.anclar: ', this.anclar);
+            this.titleGraph = this.lineas[0].name;
+            this.lineGraphElement = document.getElementById('linechart') as HTMLDivElement;
+            const nameGraphId = this.titleGraph + 'graph';
+            this.divTableGraph = document.getElementById(nameGraphId) as HTMLDivElement;
+            this.objetiveGraph = this.getObjetiveGraph();
 
             ob.next(this.mediaString);
             ob.complete();
         });
+    }
+    private getObjetiveGraph() {
+        console.log('aver', this.anclar);
+        if (this.anclar === true) {
+            return this.divTableGraph;
+        } else {
+            return this.lineGraphElement;
+        }
     }
 }
