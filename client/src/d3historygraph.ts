@@ -201,7 +201,7 @@ export class GraphLineComponent {
                 this.newxScale = undefined;
                 // comprobar que se inicializan los ejes al salir del zoom
                 console.log('initAxes');
-                this.initAxes();
+                this.initAxes().subscribe();
             }
             ob.next(true);
         });
@@ -379,20 +379,20 @@ export class GraphLineComponent {
         });
     }
     public getSvgViewPort$() {
-        return new Observable<d3.Selection<SVGGElement, {}, null, undefined>>((ob) => {
-            const svgViewport = d3
-            .select(this.objetiveGraph)
-            .append('svg')
-            .attr('id', this.titleGraph)
-            .style('background', 'white')
-            .attr('viewBox', `0 0 ${this.svgWidth} ${this.svgHeight}`);
-            // asignar anclado si se crea el svgvieport en la tabla
-            if (this.anclar === true) {
-                this.anclado = true;
-            }
-            ob.next(svgViewport);
-            ob.complete();
-        });
+        if (this.anclar === true) {
+            this.anclado = true;
+        }
+        return of(d3
+        .select(this.objetiveGraph)
+        .append('svg')
+        .attr('id', this.titleGraph)
+        .style('background', 'white')
+        .attr('viewBox', `0 0 ${this.svgWidth} ${this.svgHeight}`))
+        .pipe(
+            tap((svvv) => this.svgViewport = svvv),
+        );
+        // asignar anclado si se crea el svgvieport en la tabla
+
     }
     public initSvg() {
         return new Observable<boolean>((ob) => {
@@ -407,12 +407,27 @@ export class GraphLineComponent {
                 'translate(' + this.margin.left + ',' + this.margin.top + ')',
                 );
                 ob.next(true);
+                ob.complete();
             });
         });
     }
-    public defineChart() {
-        return this.initSvg()
+    public getInnerSpace$(svgViewport: d3.Selection<SVGGElement, {}, null, undefined>) {
+        return of(svgViewport
+        .append('g')
+        .attr('class', 'inner_space')
+        .attr(
+        'transform',
+        'translate(' + this.margin.left + ',' + this.margin.top + ')',
+        ))
         .pipe(
+            tap((innerSpace) => this.innerSpace = innerSpace),
+        );
+
+    }
+    public defineChart() {
+        return this.getSvgViewPort$()
+        .pipe(
+            switchMap((svgv) => this.getInnerSpace$(svgv)),
             switchMap(() => this.initScales()),
             switchMap(() => this.initAxes()),
             switchMap(() => this.initZoom()),
