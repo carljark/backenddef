@@ -840,11 +840,8 @@ export class GraphLineComponent {
             this.objetiveGraph = this.divTableGraph;
             this.anclado = true;
         }
-
-
-        
     }
-    
+
     private desanclarGraph() {
         if (this.anclado === true) {
             this.divTableGraph.removeChild(this.svgViewport.node());
@@ -865,13 +862,13 @@ export class GraphLineComponent {
             const widthString = this.mediaString.match(/[0-9]+/);
             let widthToNumber = 768;
             let numberOfTicks = 4;
-            
+
             if (widthString.length) {
                 widthToNumber = parseInt(widthString[0], 10);
                 numberOfTicks = widthToNumber / 100;
-                
+
             }
-            
+
             if (this.mediaString === '(min-width: 1025px)') {
                 this.xTicks = 6;
                 this.yTicks = 6;
@@ -896,7 +893,7 @@ export class GraphLineComponent {
                 // this.desanclar = true;
                 this.anclar = true;
             }
-            
+
             if (this.mediaString === '(max-width: 1024px)') {
                 this.xTicks = 8;
                 this.yTicks = 8;
@@ -914,9 +911,6 @@ export class GraphLineComponent {
                 this.anclar = true;
 
             }
-            console.log('this.mediastring: ', this.mediaString);
-
-            console.log('this.anclar: ', this.anclar);
             this.titleGraph = this.lineas[0].name;
             this.lineGraphElement = document.getElementById('linechart') as HTMLDivElement;
             const nameGraphId = this.titleGraph + 'graph';
@@ -928,7 +922,6 @@ export class GraphLineComponent {
         });
     }
     private getObjetiveGraph() {
-        console.log('aver', this.anclar);
         if (this.anclar === true) {
             return this.divTableGraph;
         } else {

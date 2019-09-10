@@ -56,18 +56,12 @@ export default class Server {
     constructor(private port: number) {
         this.app = express();
         if (mode === 'development') {
-            console.log('http');
-            this.server = http.createServer(this.app);
-            this.ioserver = socketio(this.server);
-        } else if (mode === 'production') {
-            console.log('https');
-            this.server = https.createServer(credentials , this.app);
-            this.ioserver = socketio(this.server);
-        } else {
             // this.server = http.createServer(this.app);
             this.server = https.createServer(credentials , this.app);
-            this.ioserver = socketio(this.server);
+        } else {
+            this.server = https.createServer(credentials , this.app);
         }
+        this.ioserver = socketio(this.server);
         // inicio el socket
 
         // sustituto las funciones de dentro de on connection
@@ -130,7 +124,7 @@ export default class Server {
         .subscribe((lastResponseDb) => {
             lastRespDb = lastResponseDb;
             this.ioserver.emit('coin update', lastResponseDb.data);
-            console.log('lastResponseDb.data: ', lastResponseDb.data);
+            // console.log('lastResponseDb.data: ', lastResponseDb.data);
         });
 
         const emailInterval = setInterval(() => {
