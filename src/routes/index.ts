@@ -1,8 +1,10 @@
-import {  json, NextFunction, Request, Response, Router, static as estaticExpress, urlencoded } from 'express';
+import { json, Router, static as estaticExpress, urlencoded } from 'express';
 
 import cors from 'cors';
 
 import coinsRoute from './coins-route';
+
+import swaggerRoute from './swaggerui';
 
 import path from 'path';
 
@@ -18,6 +20,7 @@ class MainRoute {
     public routes() {
         this.router.use('/', estaticExpress(path.join(__dirname, '../../client/dist')));
         this.router.use('/api', coinsRoute);
+        this.router.use('/apidocs', swaggerRoute);
     }
 }
 

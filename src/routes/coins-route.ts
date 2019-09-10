@@ -148,7 +148,7 @@ class CoinsRoute {
       });
       console.log(coin);
       if (coin) {
-        res.json(coin.price);
+        res.json(coin);
       } else {
         res.send(`no se ha encontrado en coinbyid: ${req.params.name}`);
       }
