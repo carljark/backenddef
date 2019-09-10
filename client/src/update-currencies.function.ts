@@ -1,5 +1,3 @@
-import { Observable, of } from 'rxjs';
-import { mapTo, tap } from 'rxjs/operators';
 import ISimpleCoin from './simplecoin.interface';
 
 const updateCurrencies = (
@@ -16,6 +14,5 @@ const updateCurrencies = (
           })
           .toString();
       });
-
 };
 export default updateCurrencies;

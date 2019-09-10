@@ -1,6 +1,5 @@
 const getInitMediaString = () => {
     const currentWidth = window.innerWidth;
-    console.log('currentWidth: ', currentWidth);
     let currentWidthRule = '(min-width: 1025px)';
 
     if (currentWidth > 1024) {
@@ -14,9 +13,7 @@ const getInitMediaString = () => {
     } else {
         currentWidthRule = '(max-width: 320px)';
     }
-    console.log('currentWidthRule: ', currentWidthRule);
     return currentWidthRule;
-
 };
 
 export default getInitMediaString;

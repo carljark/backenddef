@@ -1,3 +1,5 @@
+import url from 'url';
+
 import {
   json,
   NextFunction,
@@ -36,7 +38,7 @@ class CoinsRoute {
       switchMap((dataCoinsResponse) => CoinsInterf.insertOne(dataCoinsResponse), (resp) => resp),
     )
     .subscribe((dataResponse) => {
-      console.log(dataResponse.data);
+      // console.log(dataResponse.data);
       /* const dataResultArray = dataResponse.data.filter((elto) => {
         return elto.name === 'bitcoin' || elto.name === 'ethereum';
       }); */
@@ -70,7 +72,7 @@ class CoinsRoute {
       const ethereum = dataResponse.data.find((elto) => {
         return elto.name === 'ethereum';
       });
-      console.log(ethereum);
+      // console.log(ethereum);
       if (ethereum) {
         res.json(ethereum.price);
       } else {
@@ -82,15 +84,15 @@ class CoinsRoute {
   public getHistory(req: Request, res: Response, next: NextFunction): void {
     CoinsInterf.getAll()
     .subscribe((result) => {
-      console.log('result de todas las respuestas', result);
+      // console.log('result de todas las respuestas', result);
       res.send(result);
     });
   }
 
   public getHistoryCoin(req: Request, res: Response, next: NextFunction): void {
-    console.log('req.params.name: ', req.params.name);
-    console.log('typeof req.params.name: ', (typeof req.params.name));
-    console.log('name in params: ', ('name' in req.params));
+    // console.log('req.params.name: ', req.params.name);
+    // console.log('typeof req.params.name: ', (typeof req.params.name));
+    // console.log('name in params: ', ('name' in req.params));
     if (req.params.name !== 'undefined') {
       dataResponse$
       .pipe(
@@ -99,11 +101,11 @@ class CoinsRoute {
         tap((index) => console.log(index)),
       )
       .subscribe((index) => {
-        console.log('name finded: ', index);
+        // console.log('name finded: ', index);
         if (index !== -1) {
           CoinsInterf.getHistoryFromDateToMinsAndName(new Date(), config.timeAmount, req.params.name)
           .subscribe((history) => {
-            console.log('icoinhistory: ', history);
+            // console.log('icoinhistory: ', history);
             res.send(history);
           });
         } else {
@@ -116,7 +118,46 @@ class CoinsRoute {
 
   }
 
+  public getCoinByName(req: Request, res: Response, next: NextFunction) {
+    const queryData = url.parse(req.url, true).query;
+    if (queryData.coinName) {
+      console.log('coinName: ', queryData.coinName);
+    } else {
+      console.log('no coinName');
+    }
+    dataResponse$
+    .subscribe((dataResponse) => {
+      const coin = dataResponse.data.find((elto) => {
+        return elto.name === req.params.coinName;
+      });
+      console.log(coin);
+      if (coin) {
+        res.json(coin.price);
+      } else {
+        console.log('req.query: ', req.query);
+        res.send(`no se ha encontrado en coinbyname : ${req.query.coinName}`);
+      }
+    });
+  }
+  public getCoinById(req: Request, res: Response, next: NextFunction) {
+    console.log('req.params.coinId', req.params.coinId);
+    dataResponse$
+    .subscribe((dataResponse) => {
+      const coin = dataResponse.data.find((elto) => {
+        return elto.id === parseInt(req.params.coinId, 10);
+      });
+      console.log(coin);
+      if (coin) {
+        res.json(coin.price);
+      } else {
+        res.send(`no se ha encontrado en coinbyid: ${req.params.name}`);
+      }
+    });
+  }
+
   public routes() {
+    this.router.get('/coins/ids/:coinId', this.getCoinById.bind(this));
+    this.router.get('/coins/names/:coinName', this.getCoinByName.bind(this));
     this.router.get('/coins/bitcoin', this.bitCoinRoute.bind(this));
     this.router.get('/coins/ethereum', this.ethereumCoinRoute.bind(this));
     this.router.get('/coins/history', this.getHistory.bind(this));

@@ -5,9 +5,7 @@ const changeWidth$ = new BehaviorSubject<string>(getInitMediaString());
 
 const detectWidth = (mediaQList: MediaQueryListEvent): any => {
     if (mediaQList.matches) {
-        console.log(mediaQList);
         changeWidth$.next(mediaQList.media);
-
     }
 };
 

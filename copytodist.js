@@ -11,4 +11,6 @@ var copyToDist = function (dirOrig, dirDest, file) {
     });
 };
 copyToDist('./src/coinmarketdata', './dist/coinmarketdata', 'samplecurrencylisting20190819_114550.json');
+copyToDist('./src/server', './dist/server', 'fullchain.pem');
+copyToDist('./src/server', './dist/server', 'privkey.pem');
 // copyToDist('styles.css');

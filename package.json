@@ -5,10 +5,13 @@
   "author": "Carlos Godoy <carlosag31@hotmail.com>",
   "license": "MIT",
   "scripts": {
-    "prestart": "tsc -w &",
+    "prestart": "yarn run buildwatch",
     "start": "cross-env NODE_ENV=development node dist",
-    "dev": "cross-env NODE_ENV=development nodemon dist",
+    "dev": "npm-run-all --parallel buildwatch rundev",
+    "rundev": "cross-env NODE_ENV=development nodemon dist",
+    "buildwatch": "cross-env NODE_ENV=development tsc -w",
     "build": "cross-env NODE_ENV=production tsc && yarn run copytodist",
+    "builddev": "cross-env NODE_ENV=development tsc && yarn run copytodist",
     "test": "cross-env NODE_ENV=development ts-node src/modelos/tests/coins_test_gethistoryfromdatetominsandname.ts",
     "copytodist": "node copytodist"
   },
@@ -35,6 +38,7 @@
     "@types/nodemailer-smtp-transport": "^2.7.4",
     "@types/request-promise": "^4.1.44",
     "@types/socket.io": "^2.1.2",
+    "npm-run-all": "^4.1.5",
     "typescript": "^3.5.3"
   }
 }

@@ -142,6 +142,11 @@ svg {
   fill: none;
   pointer-events: all;
 }
+
+.graphembeed {
+  width: 100%;
+}
+
 @keyframes growcircle {
   from {
     stroke-width: 2px;
@@ -215,7 +220,7 @@ svg {
 .text_tooltip {
   fill: darkgreen;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 20px;
   font-family: sans-serif;
 }
 
@@ -229,7 +234,7 @@ $break-medium: 1024px;
     flex-direction: column-reverse;
   }
   .text_tooltip {
-    font-size: 20px;
+    font-size: 24px;
   }
   .tabla {
     max-width: 100%;
@@ -248,7 +253,7 @@ $break-small: 568px;
     max-width: 100%;
   }
   .axis {
-    font: 24px sans-serif;
+    font: 20px sans-serif;
   }
 }
 $break-lite: 320px;
@@ -264,7 +269,7 @@ $break-lite: 320px;
     max-width: 100%;
   }
   .axis {
-    font: 20px sans-serif;
+    font: 24px sans-serif;
   }
   .hover-line {
     // stroke: burlywood;
