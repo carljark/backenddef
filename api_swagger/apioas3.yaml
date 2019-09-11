@@ -17,32 +17,9 @@ paths:
             content:
               application/json:
                 schema:
-                  type: object
-                  properties:
-                    status:
-                      type: object
-                      properties:
-                        timestamp:
-                          type: string
-                        error_code:
-                          type: number
-                        error_message:
-                          type: string
-                        elapsed:
-                          type: number
-                        credit_count:
-                          type: number
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: number
-                          name:
-                            type: string
-                          price:
-                            type: number
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Coin'
   /coins/names/{coinName}:
     get:
       tags:
@@ -84,7 +61,7 @@ paths:
             format: int64
       responses:
         '200':
-          description: succesful operation
+          description: successfull operation
           content:
             application/json:
               schema:
@@ -92,8 +69,44 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Coin'
+  /coins/history/{coinName}:
+    get:
+      tags:
+        - history
+      summary: Retrieve history of one crypto-coin
+      description: Return a json with the history of the named cripto-coin
+      operationId: getHistoryByName
+      parameters:
+        - name: coinName
+          in: path
+          description: Name of crypto-coin
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICoinHistory'
 components:
   schemas:
+    ICoinHistory:
+      type: object
+      properties:
+        name:
+          type: string
+        timePriceArray:
+          type: array
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+              timestamp:
+                type: string
+                format: date
     Coin:
       type: object
       properties:
@@ -109,3 +122,30 @@ components:
         name: Coin
     Price:
       type: number
+    ICoinsResponse:
+      type: object
+      properties:
+        status:
+          type: object
+          properties:
+            timestamp:
+              type: string
+            error_code:
+              type: number
+            error_message:
+              type: string
+            elapsed:
+              type: number
+            credit_count:
+              type: number
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+              price:
+                type: number

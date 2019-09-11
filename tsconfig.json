@@ -65,8 +65,8 @@
     "./src/routes/*",
     "./src/coinmarketdata/*",
     "./src/db/*",
-    "./src/modelos/*",
-    "./src/email/*"
+    "src/dbmodels/*",
+    "./src/email/*", "src/interfaces/simplecoin.interface.ts", "src/interfaces/coin-history.interface.ts", "src/interfaces/response-simplified.interface.ts", "src/interfaces/response-coinmarket.interface.ts"
   ],
   "exclude": [
     "./node_modules"

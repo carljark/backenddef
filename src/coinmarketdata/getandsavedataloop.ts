@@ -1,7 +1,7 @@
 import {interval} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
 import getData$ from '../coinmarketdata/getdata.function';
-import CoinsInterf from '../modelos/coins-responses';
+import CoinsInterf from '../dbmodels/coins-responses';
 
 const getAndSaveDataLoop = () => {
   interval(6000)

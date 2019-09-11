@@ -9,7 +9,6 @@ const mode = process.env.NODE_ENV;
 console.log('servidor auxiliar');
 const apphttp = express();
 apphttp.use((req, res, next) => {
-    console.log('ostias');
     res.redirect(config.urlServerRedirect);
     next();
 });

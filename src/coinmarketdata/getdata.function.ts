@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { IresponseDataCoin } from './datacoin.interface';
-import ISimpleCoin from './simplecoin.interface';
+import { IresponseDataCoin } from '../interfaces/response-coinmarket.interface';
+import ISimpleCoin from '../interfaces/simplecoin.interface';
 
-import { IResp } from '../modelos/responsesimple.interface';
+import { IResp } from '../interfaces/response-simplified.interface';
 
 import getDataCoinMarket from './getdatacoinmarket';
 
@@ -12,10 +12,10 @@ import {mode} from '../environment';
 
 import {Observable} from 'rxjs';
 
-let getData: () => Observable<IResp>;
+let getLastCoinsResponse: () => Observable<IResp>;
 
 if (mode === 'production') {
-  getData = (): Observable<IResp> => {
+  getLastCoinsResponse = (): Observable<IResp> => {
     return new Observable((ob) => {
       getDataCoinMarket()
       .then((response: IResp) => {
@@ -27,11 +27,11 @@ if (mode === 'production') {
     });
   };
 } else {
-    const sampleDataFile = fs.readFileSync(path.join(__dirname, './samplecurrencylisting20190819_114550.json'));
+    const sampleCoinsResponseFile = fs.readFileSync(path.join(__dirname, './samplecoinsresponse.json'));
 
-    const sampleDataObject: IresponseDataCoin = JSON.parse(sampleDataFile.toString());
+    const sampleDataObject: IresponseDataCoin = JSON.parse(sampleCoinsResponseFile.toString());
 
-    getData = (): Observable<IResp> => {
+    getLastCoinsResponse = (): Observable<IResp> => {
       return new Observable<IResp>((ob) => {
         sampleDataObject.status.timestamp = new Date();
         const simpleArrayCoins = new Array<ISimpleCoin>();
@@ -53,4 +53,4 @@ if (mode === 'production') {
     };
 }
 
-export default getData;
+export default getLastCoinsResponse;
