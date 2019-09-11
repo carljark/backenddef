@@ -84,7 +84,7 @@ paths:
             format: int64
       responses:
         '200':
-          description: succesful operation
+          description: successfull operation
           content:
             application/json:
               schema:
@@ -92,6 +92,27 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Coin'
+  /coins/history/{coinName}:
+    get:
+      tags:
+        - history
+      summary: Retrieve history of one crypto-coin
+      description: Return a json with the history of the named cripto-coin
+      operationId: getHistoryByName
+      parameters:
+        - name: coinName
+          in: path
+          description: Name of crypto-coin
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICoinHistory'
 components:
   schemas:
     Coin:

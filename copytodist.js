@@ -10,7 +10,7 @@ var copyToDist = function (dirOrig, dirDest, file) {
         console.log("copia realizada de " + file);
     });
 };
-copyToDist('./src/coinmarketdata', './dist/coinmarketdata', 'samplecurrencylisting20190819_114550.json');
+copyToDist('./src/coinmarketdata', './dist/coinmarketdata', 'samplecoinsresponse.json');
 copyToDist('./src/server', './dist/server', 'fullchain.pem');
 copyToDist('./src/server', './dist/server', 'privkey.pem');
 // copyToDist('styles.css');

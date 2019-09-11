@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import IDataCoin, {IresponseDataCoin} from './datacoin.interface';
-import ISimpleCoin from './simplecoin.interface';
+import IDataCoin, {IresponseDataCoin} from '../interfaces/response-coinmarket.interface';
+import ISimpleCoin from '../interfaces/simplecoin.interface';
 
-import {IResp} from '../modelos/responsesimple.interface';
+import {IResp} from '../interfaces/response-simplified.interface';
 
 const sampleDataFile = fs.readFileSync(path.join(__dirname, './samplecurrencylisting.json'));
 

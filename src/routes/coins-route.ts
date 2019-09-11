@@ -1,13 +1,12 @@
 import { json, NextFunction, Request, Response, Router, urlencoded } from 'express';
 import { map, switchMap } from 'rxjs/operators';
-import getData$ from '../coinmarketdata/getdata.function';
+import getLastCoinsResponse$ from '../coinmarketdata/getdata.function';
 import config from '../environment';
-import CoinsInterf from '../modelos/coins-responses';
-
+import CoinsInterf from '../dbmodels/coins-responses';
 
 class CoinsRoute {
   public router: Router;
-  private dataResponse$ = getData$();
+  private lastCoinsResponse$ = getLastCoinsResponse$();
   constructor() {
     this.router = Router();
     this.router.use(json());
@@ -17,7 +16,7 @@ class CoinsRoute {
   public mainRoute(req: Request, res: Response, next: NextFunction) {
     // al acceder a esta ruta establecemos una conexion permanente
     // con el cliente a traves de websockets con socket.io
-    this.dataResponse$
+    this.lastCoinsResponse$
     .pipe(
       switchMap((dataCoinsResponse) => CoinsInterf.insertOne(dataCoinsResponse), (resp) => resp),
     )
@@ -28,15 +27,9 @@ class CoinsRoute {
       next();
     });
   }
-  public getHistory(req: Request, res: Response, next: NextFunction): void {
-    CoinsInterf.getAll()
-    .subscribe((result) => {
-      res.send(result);
-    });
-  }
   public getHistoryCoin(req: Request, res: Response, next: NextFunction): void {
     if (req.params.name !== 'undefined') {
-      this.dataResponse$
+      this.lastCoinsResponse$
       .pipe(
         map((resp) => resp.data.map((coin) => coin.name)),
         map((arrayName) => arrayName.findIndex((name) => name === req.params.name)),
@@ -56,7 +49,7 @@ class CoinsRoute {
     }
   }
   public getCoinByName(req: Request, res: Response, next: NextFunction) {
-    this.dataResponse$
+    this.lastCoinsResponse$
     .subscribe((dataResponse) => {
       const coin = dataResponse.data.find((elto) => {
         return elto.name === req.params.coinName;
@@ -72,7 +65,7 @@ class CoinsRoute {
   }
   public getCoinById(req: Request, res: Response, next: NextFunction) {
     console.log('req.params.coinId', req.params.coinId);
-    this.dataResponse$
+    this.lastCoinsResponse$
     .subscribe((dataResponse) => {
       const coin = dataResponse.data.find((elto) => {
         return elto.id === parseInt(req.params.coinId, 10);
@@ -88,7 +81,6 @@ class CoinsRoute {
   public routes() {
     this.router.get('/coins/ids/:coinId', this.getCoinById.bind(this));
     this.router.get('/coins/names/:coinName', this.getCoinByName.bind(this));
-    this.router.get('/coins/history', this.getHistory.bind(this));
     this.router.get('/coins/history/:name', this.getHistoryCoin.bind(this));
     this.router.use('/coins', this.mainRoute.bind(this));
   }

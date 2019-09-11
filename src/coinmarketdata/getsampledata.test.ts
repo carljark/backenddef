@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import {IresponseDataCoin} from './datacoin.interface';
+import {IresponseDataCoin} from '../interfaces/response-coinmarket.interface';
 
 const sampleDataFile = fs.readFileSync(path.join(__dirname, './samplecurrencylisting.json'));
 

@@ -7,9 +7,9 @@ import { Observable } from 'rxjs';
 import { map, mapTo, switchMap } from 'rxjs/operators';
 import dbMo from '../db/db';
 import db$ from '../db/db.factory';
-import { IResp, IRespDb } from './responsesimple.interface';
+import { IResp, IRespDb } from '../interfaces/response-simplified.interface';
 
-import {ICoinHistory, ITimePrice} from '../coinmarketdata/coin-history.interface';
+import {ICoinHistory, ITimePrice} from '../interfaces/coin-history.interface';
 
 class InterfazCoins {
   public static init(): InterfazCoins {

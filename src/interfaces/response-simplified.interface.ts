@@ -1,6 +1,6 @@
-import ISimpleCoin from '../coinmarketdata/simplecoin.interface';
+import ISimpleCoin from './simplecoin.interface';
 
-import {Istatus} from '../coinmarketdata/datacoin.interface';
+import {Istatus} from './response-coinmarket.interface';
 
 export interface IResp {
   status: Istatus;

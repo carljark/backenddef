@@ -7,11 +7,10 @@ import Mail from '../email/mail';
 
 import indexRoute from '../routes/index';
 
-import path from 'path';
 import getData$ from '../coinmarketdata/getdata.function';
-import { IResp } from '../modelos/responsesimple.interface';
+import { IResp } from '../interfaces/response-simplified.interface';
 
-import CoinsInterf from '../modelos/coins-responses';
+import CoinsInterf from '../dbmodels/coins-responses';
 
 import config from '../environment';
 

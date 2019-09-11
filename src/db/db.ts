@@ -51,6 +51,7 @@ export class Bd {
         .find({}).toArray( (err, docs) => {
           assert.equal(err, null);
           ob.next(docs);
+          ob.complete();
         });
       });
   }
