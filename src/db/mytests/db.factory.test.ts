@@ -1,4 +1,4 @@
-import db from './db.factory';
+import db from '../db.factory';
 
 db.subscribe((d) => {
   console.log('conectado: ');

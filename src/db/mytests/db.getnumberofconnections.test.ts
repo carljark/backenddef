@@ -1,6 +1,6 @@
 import {Db, MongoClient, Server} from 'mongodb';
 
-import db$ from './db.factory';
+import db$ from '../db.factory';
 
 db$
 .subscribe((db) => {

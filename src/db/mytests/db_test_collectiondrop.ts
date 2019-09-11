@@ -1,6 +1,8 @@
 // soporta insertar los argumentos desde la línea de comandos
 import {argv} from 'process';
-import db from '../db';
+import {switchMap} from 'rxjs/operators';
+import dbInterf from '../db';
+import db$ from '../db.factory';
 
 let col = 'responses';
 if (argv.length > 2) {
@@ -9,7 +11,10 @@ if (argv.length > 2) {
 
 console.log('nombre de la coleccion a consultar: ', col);
 
-db.delCollection(col)
+db$
+.pipe(
+	switchMap((db) => dbInterf.delCollection(db, col)),
+	)
 .subscribe((ok) => {
   console.log('collection droped: ', ok);
 });

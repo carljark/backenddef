@@ -2,9 +2,9 @@ import {
     mergeMap,
     switchMap,
 } from 'rxjs/operators';
-import getData$ from '../coinmarketdata/getdata.function';
-import dbinterfaz from './db';
-import db$ from './db.factory';
+import getData$ from '../../coinmarketdata/getdata.function';
+import dbinterfaz from '../db';
+import db$ from '../db.factory';
 
 const dataSample = getData$();
 
