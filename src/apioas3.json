@@ -25,7 +25,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ICoinsResponse"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Coin"
+                  }
                 }
               }
             }
@@ -157,14 +160,12 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
-                  "type": "number"
-                },
-                "name": {
-                  "type": "string"
-                },
                 "price": {
                   "type": "number"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date"
                 }
               }
             }
