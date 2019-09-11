@@ -17,32 +17,7 @@ paths:
             content:
               application/json:
                 schema:
-                  type: object
-                  properties:
-                    status:
-                      type: object
-                      properties:
-                        timestamp:
-                          type: string
-                        error_code:
-                          type: number
-                        error_message:
-                          type: string
-                        elapsed:
-                          type: number
-                        credit_count:
-                          type: number
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: number
-                          name:
-                            type: string
-                          price:
-                            type: number
+                  $ref: '#/components/schemas/ICoinsResponse'
   /coins/names/{coinName}:
     get:
       tags:
@@ -115,6 +90,22 @@ paths:
                 $ref: '#/components/schemas/ICoinHistory'
 components:
   schemas:
+    ICoinHistory:
+      type: object
+      properties:
+        name:
+          type: string
+        timePriceArray:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+              price:
+                type: number
     Coin:
       type: object
       properties:
@@ -130,3 +121,30 @@ components:
         name: Coin
     Price:
       type: number
+    ICoinsResponse:
+      type: object
+      properties:
+        status:
+          type: object
+          properties:
+            timestamp:
+              type: string
+            error_code:
+              type: number
+            error_message:
+              type: string
+            elapsed:
+              type: number
+            credit_count:
+              type: number
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+              price:
+                type: number
