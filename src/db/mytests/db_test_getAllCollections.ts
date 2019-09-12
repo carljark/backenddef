@@ -11,6 +11,6 @@ if (argv.length > 2) {
 db.getAllCollections()
 .subscribe((result) => {
     // console.log('data.ops devuelto por insertaruno en la instancia: \n', data.ops);
-    const yo = result.map((elto, index, array) => elto.name);
+    const yo = result.collections.map((elto, index, array) => elto.name);
     console.log('getAllCollections --> ok \n', yo);
 });

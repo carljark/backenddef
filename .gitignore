@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 node_modules/
 dist/
 client/node_modules/
 client/dist/
+=======
+node_modules
+dist
+client/dist
+>>>>>>> 6bb3bcd1757816920b73e040edf3054b5524e778

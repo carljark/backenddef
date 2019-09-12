@@ -4,15 +4,27 @@ import {
 } from 'rxjs/operators';
 import getData$ from '../../coinmarketdata/getdata.function';
 import dbinterfaz from '../db';
+import db$ from '../db.factory';
 
 const dataSample = getData$();
 
-dataSample
+db$
 .pipe(
-  switchMap((lastCoinsResponse) => dbinterfaz.insertOne('responses', lastCoinsResponse)),
-  switchMap(() => dbinterfaz.getLast('responses')),
-  mergeMap((lastFromDb) => dbinterfaz.delAll('responses')),
- )
-.subscribe((delRes) => {
-    console.log(delRes.result);
+  mergeMap((db) => dataSample,
+    (db, doc) => ({db, doc})),
+  switchMap((dbAndDoc) => dbinterfaz.insertOne(
+      dbAndDoc.db, 'responses', dbAndDoc.doc),
+    (cliDataInsert) => cliDataInsert.db),
+  switchMap((db) => {
+    return dbinterfaz.getLast(db, 'responses');
+  },
+    (db, lastres) => ({db, lastres})),
+  mergeMap((dbAndRes) => {
+    console.log(dbAndRes.lastres);
+    return dbinterfaz.delAll(dbAndRes.db, 'responses');
+  },
+    (dbAndRes, resDel) => ({db: dbAndRes.db, resDel})),
+)
+.subscribe((dbAndDel) => {
+    console.log(dbAndDel.resDel.result);
 });

@@ -4,9 +4,9 @@ import dbMo from '../db';
 
 getLastCoinsResponse()
 .pipe(
-    switchMap((lastCoinsResponse) => dbMo.insertOne('responses', lastCoinsResponse)),
+    switchMap((dbAndDoc) => dbMo.insertOne('responses', dbAndDoc)),
     switchMap(() => dbMo.getLastFromPromised('responses')),
 )
-.subscribe((lastFromDb) => {
-    console.log(lastFromDb);
+.subscribe((lastFromP) => {
+    console.log(lastFromP);
 });
