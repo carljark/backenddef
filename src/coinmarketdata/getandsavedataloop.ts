@@ -9,9 +9,7 @@ const getAndSaveDataLoop = () => {
     switchMap(() => getData$()),
     switchMap((dataCoinsResponse) => CoinsInterf.insertOne(dataCoinsResponse)),
   )
-  .subscribe((result) => {
-      // console.log('result de insertar la nueva response: ', result.insertedId);
-  });
+  .subscribe();
 
 };
 

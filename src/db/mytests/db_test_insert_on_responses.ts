@@ -2,7 +2,7 @@
 import {argv} from 'process';
 import db from '../db';
 
-import {IResp} from '../../modelos/responsesimple.interface';
+import {IResp} from '../../interfaces/response-simplified.interface';
 
 let coleccion = 'responses';
 let idInput = 0;
@@ -63,5 +63,6 @@ const coinsResponseDoc = createCoinsResponseDoc();
 
 db.insertOne(coleccion, coinsResponseDoc)
 .subscribe((result) => {
-  console.log('insertado una respuesta con array de coins --> ok', result);
+  console.log('insertado una respuesta con array de coins --> ok', result.result);
+  result.cli.close();
 });

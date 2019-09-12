@@ -11,9 +11,9 @@ const url = `mongodb://${config.databaseConfig.host}:27017`;
 
 export class BdFact {
 
-  public static db: Observable<Db> = BdFact.connect();
+  public static db: Observable<{cli: MongoClient, db: Db}> = BdFact.connect();
 
-  public static connect(): Observable<Db> {
+  public static connect(): Observable<{cli: MongoClient, db: Db}> {
     return from(
       MongoClient.connect(url,
         {
@@ -22,7 +22,12 @@ export class BdFact {
           useUnifiedTopology: true,
         }))
     .pipe(
-      map((cli) => cli.db(config.databaseConfig.database)),
+      map((cli) => {
+        return {
+          cli,
+          db: cli.db(config.databaseConfig.database),
+        };
+      }),
     );
   }
 }

@@ -1,3 +1,4 @@
+import { tap } from 'rxjs/operators';
 import modelo from '../coins-responses';
 
 // precios desde una fecha concreta
@@ -5,7 +6,9 @@ import modelo from '../coins-responses';
 // const endDate = (new Date('2019-08-02T15:45:10.845Z'));
 const endDate = (new Date());
 
-modelo.getHistoryFromDateToMinsAndName(endDate, 1, 'bitcoin')
-.subscribe((history) => {
-  console.log('getHistoryFromDateToMinsAndName --> ok', history.timePriceArray.length);
-});
+const testGetHistoryFromDateToMinsAndName = modelo.getHistoryFromDateToMinsAndName(endDate, 30, 'bitcoin')
+.pipe(
+  tap((history) => console.log('getHistoryFromDateToMinsAndName --> ok', history.timePriceArray.length)),
+);
+
+export default testGetHistoryFromDateToMinsAndName;

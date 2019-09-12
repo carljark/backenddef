@@ -1,4 +1,6 @@
 import {argv} from 'process';
+import { tap } from 'rxjs/operators';
+
 import modelo from '../coins-responses';
 
 let nombreAtributo = 'status.elapsed';
@@ -13,8 +15,7 @@ const atributo: object = {
   [nombreAtributo]: valorAtributo,
 };
 
-modelo.getMany(atributo)
-.subscribe((result) => {
-  // console.log('datos buscados: \n', datos);
-  console.log('getMany --> ok', result.length);
-});
+const testGetMany = modelo.getMany(atributo)
+.pipe(tap((result) => console.log('getMany --> ok', result.length)));
+
+export default testGetMany;

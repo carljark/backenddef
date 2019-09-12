@@ -1,8 +1,8 @@
 import { json, NextFunction, Request, Response, Router, urlencoded } from 'express';
 import { map, switchMap } from 'rxjs/operators';
 import getLastCoinsResponse$ from '../coinmarketdata/getdata.function';
-import config from '../environment';
 import CoinsInterf from '../dbmodels/coins-responses';
+import config from '../environment';
 
 class CoinsRoute {
   public router: Router;

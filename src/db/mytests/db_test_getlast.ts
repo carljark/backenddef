@@ -7,6 +7,7 @@ db.getHistory(col, 2)
   console.log('result gethistory: ', result);
 });
 db.getLast(col)
-.subscribe((result) => {
-  console.log('getlast: ', result);
-})
+.subscribe((clidbresult) => {
+  console.log('getlast: ', clidbresult.result);
+  clidbresult.cli.close();
+});

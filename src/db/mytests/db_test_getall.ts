@@ -1,5 +1,6 @@
 // soporta insertar los argumentos desde la línea de comandos
 import {argv} from 'process';
+import { switchMap } from 'rxjs/operators';
 import db from '../db';
 
 let col = 'responses';
@@ -16,6 +17,7 @@ console.log('nombre de la coleccion a consultar: ', col);
 }); */
 
 db.getAll(col)
-.subscribe((docs) => {
-  console.log('docs: ', docs);
+.subscribe((dbdocs) => {
+  console.log('docs: ', dbdocs.docs);
+  dbdocs.cli.close();
 });

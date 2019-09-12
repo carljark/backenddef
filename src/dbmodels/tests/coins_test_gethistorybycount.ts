@@ -1,6 +1,9 @@
+import { tap } from 'rxjs/operators';
 import modelo from '../coins-responses';
 
-modelo.getHistoryByCount(1)
-.subscribe((history) => {
-  console.log('getHistoryByCount --> ok', history._id);
-});
+const testGetHistoryByCount = modelo.getHistoryByCount(1)
+.pipe(
+  tap((history) => console.log('getHistoryByCount --> ok', history._id)),
+);
+
+export default testGetHistoryByCount;

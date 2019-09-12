@@ -1,6 +1,8 @@
 import {argv} from 'process';
-import {CoinDoc} from '../../modelos/coin.class';
+import {CoinDoc} from '../../interfaces/coin.class';
 import db from '../db';
+
+import { switchMap } from 'rxjs/operators';
 
 db.delAll('responses')
 .subscribe((result) => {

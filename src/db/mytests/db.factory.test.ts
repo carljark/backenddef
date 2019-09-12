@@ -1,8 +1,8 @@
-import db from './db.factory';
+import db from '../db.factory';
 
 db.subscribe((d) => {
   console.log('conectado: ');
-  d.listCollections({} , {nameOnly: true})
+  d.db.listCollections({} , {nameOnly: true})
   .toArray((err, colecciones) => {
     console.log('collections: ', colecciones);
   });

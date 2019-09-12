@@ -1,12 +1,12 @@
 import {from} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
 
-import db$ from './db.factory';
+import db$ from '../db.factory';
 
 db$
 .pipe(
   // switchMap((db) => from(db.admin().serverStatus())),
-  switchMap((db) => from(db.command({dbStats: 1, scale: 1024}))),
+  switchMap((clidb) => from(clidb.db.command({dbStats: 1, scale: 1024}))),
 )
 .subscribe((dbStats) => {
   console.log(dbStats);
